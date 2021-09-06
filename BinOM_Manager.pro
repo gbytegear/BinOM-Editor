@@ -11,7 +11,7 @@ SOURCES += \
         qbinom.cpp
 
 RESOURCES += qml.qrc
-LIBS += $$PWD/lib/libbinom.a
+LIBS += -L$$PWD/lib/ -lbinom
 INCLUDEPATH += $$PWD/include/
 
 # Additional import path used to resolve QML modules in Qt Creator's code model

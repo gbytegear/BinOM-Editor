@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Open.qml</file>
+        <file>Tree.qml</file>
+        <file>Settings.qml</file>
+    </qresource>
+    <qresource prefix="/icons" lang="svg">
+        <file>icons/account_tree_white_24dp.svg</file>
+        <file>icons/attach_file_white_24dp.svg</file>
+        <file>icons/file_white_24dp.svg</file>
+        <file>icons/folder_white_24dp.svg</file>
+        <file>icons/restore_white_24dp.svg</file>
+        <file>icons/save_white_24dp.svg</file>
+        <file>icons/settings_white_24dp.svg</file>
+        <file>icons/storage_white_24dp.svg</file>
+    </qresource>
+</RCC>

@@ -4,13 +4,8 @@
 
 BinOMFile::BinOMFile(binom::FileType file_type, QString file_path)
   : file_type(file_type),
-    storage_union(file_type, file_path) {}
-
-BinOMFile::BinOMFile(BinOMFile&& other)
-  : file_type(other.file_type),
-    storage_union(std::move(other.storage_union)) {
-  other.file_type = binom::FileType::undefined_file;
-}
+    storage_union(file_type, file_path),
+    tree_model(*getRoot()) {}
 
 BinOMFile::~BinOMFile() {
   switch (file_type) {
@@ -34,6 +29,8 @@ std::unique_ptr<binom::NodeVisitorBase> BinOMFile::getRoot() {
   }
 }
 
+QBinOMTreeModel* BinOMFile::getTreeModel() {return &tree_model;}
+
 BinOMFile::File::~File() {}
 
 BinOMFile::File::File(binom::FileType file_type, QString file_path) {
@@ -54,11 +51,30 @@ BinOMFile::File::File(binom::FileType file_type, QString file_path) {
 
 
 
+
 bool QBinOM::openFile(QString file_path) {
   fs::path path = file_path.toStdString();
   if(!fs::exists(path)) return false;
-  binom::FileType file_type = binom::checkFileType(file_path.toStdString()); // checkFileType(std::basic_string_view<char, std::char_traits<char> >) binom::checkFileType(std::basic_string_view<char, std::char_traits<char> >)
+  binom::FileType file_type = binom::checkFileType(file_path.toStdString());
   if(file_type == binom::FileType::undefined_file) return false;
-  files.emplace(path.filename().string(), BinOMFile(file_type, file_path));
+  files.emplace(QString::fromStdString(path.filename().string()), std::unique_ptr<BinOMFile>(new BinOMFile(file_type, file_path)));
+  emit openFilesChanged(getOpenFiles());
   return true;
+}
+
+void QBinOM::closeFile(QString file_name) {
+  std::map<QString, std::unique_ptr<BinOMFile>>::iterator it = files.find(file_name);
+  if(it == selected_file) {
+    selected_file = files.end();
+    emit isFileSelectedChanged(selected_file != files.cend());
+  }
+  if(it != files.cend())
+    files.erase(it);
+}
+
+bool QBinOM::selectFile(QString file_name) {
+  selected_file = files.find(file_name);
+  emit isFileSelectedChanged(selected_file != files.cend());
+  emit treeModelChanged(getTreeModel());
+  return selected_file != files.cend();
 }

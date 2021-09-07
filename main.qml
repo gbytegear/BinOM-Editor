@@ -4,6 +4,8 @@ import QtQuick.Controls 2.12
 import QtQuick.Controls.Material 2.12
 import QtQuick.Dialogs 1.3
 
+import BinOM 1.0
+
 Window {
     width: 640;
     height: 480;

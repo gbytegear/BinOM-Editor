@@ -1,5 +1,8 @@
 import QtQuick 2.12
+import QtQuick.Controls 1.4
 import QtQuick.Controls 2.12
+
+import BinOM 1.0
 
 Page {
     header: ToolBar {
@@ -7,6 +10,7 @@ Page {
             anchors.fill: parent;
 
             ToolButton {
+                visible: BinOM.is_file_selected;
                 icon.source: "qrc:/icons/icons/save_white_24dp.svg";
             }
 
@@ -27,6 +31,26 @@ Page {
             }
         }
     }
+
+    TreeView {
+        anchors.fill: parent;
+        model: BinOM.tree_model;
+        itemDelegate: ToolButton {
+            text: "Path: " + path + "Type: " + type;
+        }
+
+
+        TableViewColumn {
+            role: "path";
+            title: "Path";
+        }
+
+        TableViewColumn {
+            role: "type";
+            title: "Type";
+        }
+    }
+
 
     footer: ToolBar {
         height: 150;

@@ -8,10 +8,11 @@ CONFIG += c++17
 
 SOURCES += \
         main.cpp \
-        qbinom.cpp
+        qbinom.cpp \
+        qbinomtreemodel.cpp
 
 RESOURCES += qml.qrc
-LIBS += -L$$PWD/lib/ -lbinom
+LIBS += -L$$PWD/lib/ -lbinom -lstdc++fs
 INCLUDEPATH += $$PWD/include/
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
@@ -29,4 +30,5 @@ DISTFILES += \
     qtquickcontrols2.conf
 
 HEADERS += \
-    qbinom.h
+    qbinom.h \
+    qbinomtreemodel.h

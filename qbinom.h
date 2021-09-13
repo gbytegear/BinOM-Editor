@@ -1,7 +1,7 @@
 #ifndef QBINOM_H
 #define QBINOM_H
 
-#include "qbinomtreemodel.h"
+#include "qbinommodel.h"
 
 #include <optional>
 #include <map>
@@ -22,14 +22,15 @@ class BinOMFile {
     File(binom::FileType file_type, QString file_path);
   } storage_union;
 
-  QBinOMTreeModel tree_model;
+  QBinOMModel model;
 
 public:
   BinOMFile(binom::FileType file_type, QString file_path);
   ~BinOMFile();
 
   std::unique_ptr<binom::NodeVisitorBase> getRoot();
-  QBinOMTreeModel* getTreeModel();
+  binom::FileType getType() {return file_type;}
+  QVariantList getModel() {return model;}
 };
 
 
@@ -41,7 +42,7 @@ class QBinOM : public QObject {
 
   Q_PROPERTY(bool is_file_selected READ isFileSelected NOTIFY isFileSelectedChanged)
   Q_PROPERTY(QVariantList open_files READ getOpenFiles NOTIFY openFilesChanged)
-  Q_PROPERTY(QBinOMTreeModel* tree_model READ getTreeModel NOTIFY treeModelChanged)
+  Q_PROPERTY(QVariantList tree_model READ getTreeModel NOTIFY treeModelChanged)
   Q_OBJECT
 
 public:
@@ -53,23 +54,26 @@ public:
   Q_INVOKABLE bool isFileSelected() const {return selected_file != files.end();}
 
   QVariantList getOpenFiles() const {
-    QVariantList names;
-    for(auto& [name, unused] : files) {
-      names.push_back(name);
+    QVariantList files_info;
+    for(auto& [name, file] : files) {
+      files_info.push_back(QVariantMap{
+                             {"name", name},
+                             {"type", (file->getType() == binom::FileType::file_storage)
+                                      ? "file storage"
+                                      :(file->getType() == binom::FileType::serialized_file_storage)
+                                      ? "serialized storage"
+                                      : "undefined"}
+                           });
     }
-    return names;
+    return files_info;
   }
 
-  QBinOMTreeModel* getTreeModel() const {
-    if(isFileSelected())
-      return selected_file->second->getTreeModel();
-    return &QBinOMTreeModel::getEmptyModel();
-  }
+  QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
 
 signals:
   void isFileSelectedChanged(bool is_file_selected);
   void openFilesChanged(QVariantList open_files);
-  void treeModelChanged(QBinOMTreeModel* tree_model);
+  void treeModelChanged(QVariantList tree_mode);
 };
 
 #endif // QBINOM_H

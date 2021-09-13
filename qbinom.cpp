@@ -5,7 +5,7 @@
 BinOMFile::BinOMFile(binom::FileType file_type, QString file_path)
   : file_type(file_type),
     storage_union(file_type, file_path),
-    tree_model(*getRoot()) {}
+    model(getRoot()) {}
 
 BinOMFile::~BinOMFile() {
   switch (file_type) {
@@ -28,8 +28,6 @@ std::unique_ptr<binom::NodeVisitorBase> BinOMFile::getRoot() {
     return std::unique_ptr<binom::NodeVisitorBase>(new binom::NodeVisitor(storage_union.serialized.root_node));
   }
 }
-
-QBinOMTreeModel* BinOMFile::getTreeModel() {return &tree_model;}
 
 BinOMFile::File::~File() {}
 

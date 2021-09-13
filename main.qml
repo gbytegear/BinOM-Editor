@@ -23,7 +23,7 @@ Window {
         nameFilters: [ "BinOM files (*.binom *.binomdb)", "All files (*)" ]
 
         onAccepted: {
-
+          BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{2})/,""));
         }
 
         onRejected: {

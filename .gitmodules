@@ -1,0 +1,3 @@
+[submodule "BinOM"]
+	path = BinOM
+	url = https://github.com/gbytegear/BinOM

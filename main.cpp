@@ -1,6 +1,8 @@
 #include <QGuiApplication>
 #include <QQuickStyle>
 #include <QQmlApplicationEngine>
+#include <QFont>
+#include <QDir>
 
 #include <qbinom.h>
 
@@ -12,6 +14,7 @@ int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
 
   QQuickStyle::setStyle("Material");
+  app.setFont(QFont("Helvetica", 10));
 
   qmlRegisterSingletonType<QBinOM>("BinOM", 1, 0, "BinOM", [](QQmlEngine *engine, QJSEngine *script_engine) -> QObject * {
     Q_UNUSED(engine)

@@ -1,9 +1,12 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
+import QtQuick.Layouts 1.12
+
+import BinOM 1.0
 
 Page {
 //    anchors.fill: parent
-    Column {
+    ColumnLayout {
         anchors.fill: parent;
         ToolButton {
             width: parent.width;
@@ -26,6 +29,17 @@ Page {
                 text: "History";
             }
         }
+
+        ListView {
+          id: history_list;
+          model: BinOM.files_history;
+          required model;
+          delegate: ToolButton {
+            required property var modelData;
+            text: modelData.path;
+          }
+        }
+
 
     }
 

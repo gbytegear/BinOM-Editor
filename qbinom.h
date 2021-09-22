@@ -31,27 +31,52 @@ public:
   std::unique_ptr<binom::NodeVisitorBase> getRoot();
   binom::FileType getType() {return file_type;}
   QVariantList getModel() {return model;}
+  void switchNodeVisibility(QString path_str) {
+    binom::Path path = binom::Path::fromString(path_str.toStdString());
+    if(model.isOpen(path))
+      model.close(path);
+    else
+      model.open(path);
+  }
 };
 
+#include <QDesktopServices>
 
 class QBinOM : public QObject {
 
+  static inline QString settings_path =
+#if QT_VERSION >= 0x050000
+QStandardPaths::writableLocation(QStandardPaths::DataLocation)
+#else
+QDesktopServices::storageLocation(QDesktopServices::DataLocation)
+#endif
+      ;
+
   // Note: QMap doesn't have emplace methods
+  binom::FileStorage config;
+
   std::map<QString, std::unique_ptr<BinOMFile>> files;
   std::map<QString, std::unique_ptr<BinOMFile>>::iterator selected_file;
 
   Q_PROPERTY(bool is_file_selected READ isFileSelected NOTIFY isFileSelectedChanged)
   Q_PROPERTY(QVariantList open_files READ getOpenFiles NOTIFY openFilesChanged)
   Q_PROPERTY(QVariantList tree_model READ getTreeModel NOTIFY treeModelChanged)
+  Q_PROPERTY(QVariantList files_history READ getHistory NOTIFY historyChanged)
   Q_OBJECT
 
 public:
-  QBinOM() : QObject(nullptr), selected_file(files.end()) {}
+  QBinOM();
 
   Q_INVOKABLE bool openFile(QString file_path);
   Q_INVOKABLE void closeFile(QString file_name);
   Q_INVOKABLE bool selectFile(QString file_name);
   Q_INVOKABLE bool isFileSelected() const {return selected_file != files.end();}
+  Q_INVOKABLE bool switchNodeVisibility(QString path_str) {
+    if(!isFileSelected()) return false;
+    selected_file->second->switchNodeVisibility(path_str);
+    emit treeModelChanged(getTreeModel());
+    return true;
+  }
 
   QVariantList getOpenFiles() const {
     QVariantList files_info;
@@ -69,11 +94,13 @@ public:
   }
 
   QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
+  QVariantList getHistory();
 
 signals:
   void isFileSelectedChanged(bool is_file_selected);
   void openFilesChanged(QVariantList open_files);
   void treeModelChanged(QVariantList tree_mode);
+  void historyChanged(QVariantList files_history);
 };
 
 #endif // QBINOM_H

@@ -14,8 +14,8 @@ class QBinOMModel {
   std::unique_ptr<binom::NodeVisitorBase> node;
   QSet<QString> opened;
 
-  void buildData(QVariantList& data, binom::Path path, binom::NodeVisitor& node);
-  void buildData(QVariantList& data, binom::Path path, binom::FileNodeVisitor& node);
+  void buildData(QVariantList& data, binom::Path path, binom::NodeVisitor& node, quint64 depth = 0);
+  void buildData(QVariantList& data, binom::Path path, binom::FileNodeVisitor& node, quint64 depth = 0);
 
 public:
   QBinOMModel() = default;
@@ -23,6 +23,7 @@ public:
   operator QVariantList();
   void open(binom::Path path) {opened.insert(QString::fromStdString(path.toString()));}
   void close(binom::Path path) {opened.remove(QString::fromStdString(path.toString()));}
+  bool isOpen(binom::Path path) {return opened.contains(QString::fromStdString(path.toString()));}
 
 };
 

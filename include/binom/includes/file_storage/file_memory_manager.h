@@ -19,7 +19,7 @@ class FileMemoryManager {
   std::shared_mutex heap_page_mtx;
   RWSyncMap sync_map;
 
-  void init();
+  void init(bool force_init);
 
   void allocNodePage();
   void allocHeapPage();
@@ -37,7 +37,7 @@ class FileMemoryManager {
   void writeToVBlock(VMemoryBlock block, ByteArray data, real_index shift = 0);
 
 public:
-  FileMemoryManager(std::string_view file_path);
+  FileMemoryManager(std::string_view file_path, bool force_init = false);
 
   inline NodeDescriptor getNodeDescriptor(virtual_index node_index) {return file.read<NodeDescriptor>(translateVNodeIndex(node_index));}
   inline ByteArray getNodeData(virtual_index node_index) {return getNodeData(getNodeDescriptor(node_index));}

@@ -40,6 +40,9 @@ public:
   typedef const ValueIterator const_iterator;
 
   BufferArray(VarType type);
+  BufferArray(VarType type, size_t count);
+  BufferArray(ValType type);
+  BufferArray(ValType type, size_t count);
 
   BufferArray(const std::string_view str);
   BufferArray(const char* c_str) : BufferArray(std::string_view(c_str)) {}

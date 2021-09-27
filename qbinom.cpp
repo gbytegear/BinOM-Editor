@@ -54,28 +54,28 @@ BinOMFile::File::File(binom::FileType file_type, QString file_path) {
 
 QBinOM::QBinOM()
   : QObject(nullptr),
-    config(
-      settings_path.toStdString() + "/binom_manager_config.binomdb",
-      binom::vobj{{"file_history", binom::varr{}}}
-      ),
+//    config(
+//      settings_path.toStdString() + "/binom_manager_config.binomdb",
+//      binom::vobj{{"file_history", binom::varr{}}}
+//      ),
     selected_file(files.end()) {
-  binom::ui64 index = 0;
-  binom::FileNodeVisitor history = config.getRoot()("file_history");
-  for(binom::FileNodeVisitor file : history) {
-    if(!fs::exists(file["path"].getVariable().toBufferArray().toString()))
-      history.remove(index);
-    ++index;
-  }
+//  binom::ui64 index = 0;
+//  binom::FileNodeVisitor history = config.getRoot()("file_history");
+//  for(binom::FileNodeVisitor file : history) {
+//    if(!fs::exists(file["path"].getVariable().toBufferArray().toString()))
+//      history.remove(index);
+//    ++index;
+//  }
 }
 
 bool QBinOM::openFile(QString file_path) {
-  binom::FileNodeVisitor history = config.getRoot()("file_history");
+//  binom::FileNodeVisitor history = config.getRoot()("file_history");
   fs::path path = file_path.toStdString();
   if(!fs::exists(path)) return false;
   binom::FileType file_type = binom::checkFileType(file_path.toStdString());
   if(file_type == binom::FileType::undefined_file) return false;
   files.emplace(QString::fromStdString(path.filename().string()), std::unique_ptr<BinOMFile>(new BinOMFile(file_type, file_path)));
-  history.pushBack(binom::vobj{{"path", path.string()}});
+//  history.pushBack(binom::vobj{{"path", path.string()}});
   emit openFilesChanged(getOpenFiles());
   emit historyChanged(getHistory());
   return true;
@@ -99,12 +99,13 @@ bool QBinOM::selectFile(QString file_name) {
 }
 
 QVariantList QBinOM::getHistory() {
-  binom::FileNodeVisitor history = config.getRoot()("file_history");
-  QVariantList list;
-  for(binom::FileNodeVisitor file : history) {
-    list.push_back(QVariantMap{
-                     {"path", QString::fromStdString(file["path"].getVariable().toBufferArray())}
-                   });
-  }
-  return list;
+  return QVariantList();
+//  binom::FileNodeVisitor history = config.getRoot()("file_history");
+//  QVariantList list;
+//  for(binom::FileNodeVisitor file : history) {
+//    list.push_back(QVariantMap{
+//                     {"path", QString::fromStdString(file["path"].getVariable().toBufferArray())}
+//                   });
+//  }
+//  return list;
 }

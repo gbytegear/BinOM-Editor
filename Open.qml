@@ -6,7 +6,7 @@ import BinOM 1.0
 
 Page {
 //    anchors.fill: parent
-    ColumnLayout {
+    Column {
         anchors.fill: parent;
         ToolButton {
             width: parent.width;
@@ -30,15 +30,15 @@ Page {
             }
         }
 
-        ListView {
-          id: history_list;
-          model: BinOM.files_history;
-          required model;
-          delegate: ToolButton {
-            required property var modelData;
-            text: modelData.path;
-          }
-        }
+//        ListView {
+//          id: history_list;
+//          model: BinOM.files_history;
+////          required model;
+//          delegate: ToolButton {
+////            required property var modelData;
+//            text: modelData.path;
+//          }
+//        }
 
 
     }

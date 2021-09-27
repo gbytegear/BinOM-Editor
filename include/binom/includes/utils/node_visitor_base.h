@@ -48,6 +48,8 @@ public:
   virtual NodeVisitorBase& operator()(BufferArray name) = 0;
   virtual NodeVisitorBase& operator()(Path path) = 0;
 
+  Variable getVariableClone();
+
   NodeVisitor& toRAMVisitor() {
     if(getVisitorType() != VisitorType::ram_storage_visitor)
       throw Exception(ErrCode::binom_invalid_visitor);

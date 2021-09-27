@@ -23,10 +23,10 @@ Page {
         anchors.top: parent.top;
         orientation: ListView.Horizontal;
         model: BinOM.open_files;
-        required model;
+//        required model;
 
         delegate: ToolButton {
-          required property var modelData;
+//          required property var modelData;
           icon.source: (modelData.type === "file storage")
                        ? "qrc:/icons/icons/storage_white_24dp.svg"
                        : "qrc:/icons/icons/file_white_24dp.svg";
@@ -41,9 +41,9 @@ Page {
     id: tree_view;
     anchors.fill: parent;
     model: BinOM.tree_model;
-    required model;
+//    required model;
     delegate: ToolButton {
-      required property var modelData;
+//      required property var modelData;
 
       Rectangle {
         height: parent.height;

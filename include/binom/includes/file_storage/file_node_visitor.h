@@ -8,12 +8,16 @@ namespace binom {
 
 
 class FileNodeVisitor : public NodeVisitorBase {
+public:
+  class NodeIterator;
+private:
   typedef RWSyncMap::ScopedRWGuard ScopedRWGuard;
   typedef RWSyncMap::RWGuard RWGuard;
   typedef RWSyncMap::LockType LockType;
   class ObjectElementFinder;
 
   struct NamePosition {
+    virtual_index parent_node_index = 0;
     ValType char_type = ValType::invalid_type;
     element_cnt length = 0;
     real_index name_pos = 0;
@@ -38,8 +42,19 @@ class FileNodeVisitor : public NodeVisitorBase {
       current_rwg(fmm.getRWGuard(node_index))
   {}
 
+  FileNodeVisitor(FileMemoryManager& fmm,
+           virtual_index node_index,
+           NamePosition name_pos)
+    : fmm(fmm),
+      node_index(node_index),
+      index(index),
+      name_pos(name_pos),
+      current_rwg(fmm.getRWGuard(node_index))
+  {}
+
   friend class FileNodeVisitor::ObjectElementFinder;
   friend class FileStorage;
+  friend class FileNodeVisitor::NodeIterator;
 
   Variable buildVariable(virtual_index node_index) const;
   Primitive buildPrimitive(virtual_index node_index, const NodeDescriptor* descriptor = nullptr, ScopedRWGuard* lk = nullptr) const;
@@ -79,8 +94,6 @@ class FileNodeVisitor : public NodeVisitorBase {
     : fmm(fmm), node_index(null_index), index(null_index) {}
 
 public:
-
-  class NodeIterator;
 
   FileNodeVisitor(const FileNodeVisitor& other)
     : fmm(other.fmm),
@@ -142,11 +155,13 @@ public:
 
   NodeVisitor& toRAMVisitor() = delete;
   FileNodeVisitor& toFileVisitor() = delete;
+  Variable getVariableClone() = delete;
 };
 
 
 class FileNodeVisitor::NodeIterator {
   FileMemoryManager& fmm;
+  virtual_index parent_node_index;
   VarType container_type;
 
   union Data {
@@ -210,19 +225,20 @@ class FileNodeVisitor::NodeIterator {
 
   friend class FileNodeVisitor;
 
-  NodeIterator(FileMemoryManager& fmm, VarType type, ByteArray data)
-    : fmm(fmm), container_type(type), data(toTypeClass(type), std::move(data)) {}
+  NodeIterator(FileMemoryManager& fmm, virtual_index parent_node_index, VarType type, ByteArray data)
+    : fmm(fmm), parent_node_index(parent_node_index), container_type(type), data(toTypeClass(type), std::move(data)) {}
   NodeIterator(FileMemoryManager& fmm,
+               virtual_index parent_node_index,
                VarType type,
                virtual_index node_index,
                size_t count,
                real_index index = 0)
-    : fmm(fmm), container_type(type), data(node_index, count, index) {}
+    : fmm(fmm), parent_node_index(parent_node_index), container_type(type), data(node_index, count, index) {}
 
 public:
   NodeIterator(const NodeIterator& other) = delete;
   NodeIterator(NodeIterator&& other)
-    : fmm(other.fmm), container_type(other.container_type), data(std::move(other.data)) {other.container_type = VarType::invalid_type;}
+    : fmm(other.fmm), parent_node_index(other.parent_node_index), container_type(other.container_type), data(std::move(other.data)) {other.container_type = VarType::invalid_type;}
 
   ~NodeIterator() {
     switch (toTypeClass(container_type)) {
@@ -249,8 +265,7 @@ public:
         ++data.array_data.index_it;
       break;
       case binom::VarTypeClass::object:
-        if(data.object_data.name_count) {
-          --data.object_data.name_count;
+        if(--data.object_data.name_count) {
           data.object_data.name_it += data.object_data.name_length_it->name_length *
                                       toSize(data.object_data.name_length_it->char_type);
           ++data.object_data.index_it;
@@ -290,6 +305,8 @@ public:
   inline bool operator==(decltype (nullptr)) {return isEnd();}
   inline bool operator!=(decltype (nullptr)) {return !isEnd();}
 
+  FileNodeVisitor getParent() {return FileNodeVisitor(fmm, parent_node_index);}
+
   FileNodeVisitor operator*() {
     switch (toTypeClass(container_type)) {
       case binom::VarTypeClass::buffer_array:
@@ -297,7 +314,13 @@ public:
       case binom::VarTypeClass::array:
       return FileNodeVisitor(fmm, *data.array_data.index_it);
       case binom::VarTypeClass::object:
-      return FileNodeVisitor(fmm, *data.object_data.index_it);
+      return FileNodeVisitor(fmm, *data.object_data.index_it,
+                             NamePosition{
+                               parent_node_index,
+                               data.object_data.name_length_it->char_type,
+                               data.object_data.name_length_it->name_length,
+                               sizeof (ObjectDescriptor) + data.object_data.name_lengths.length() + ui64(data.object_data.name_it - data.object_data.names.begin())
+                             });
       default: return FileNodeVisitor(fmm, nullptr);
     }
   }

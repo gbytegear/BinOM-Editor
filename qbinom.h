@@ -53,7 +53,7 @@ QDesktopServices::storageLocation(QDesktopServices::DataLocation)
       ;
 
   // Note: QMap doesn't have emplace methods
-  binom::FileStorage config;
+//  binom::FileStorage config;
 
   std::map<QString, std::unique_ptr<BinOMFile>> files;
   std::map<QString, std::unique_ptr<BinOMFile>>::iterator selected_file;

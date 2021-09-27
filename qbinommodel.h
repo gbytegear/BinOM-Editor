@@ -2,8 +2,8 @@
 #define QBINOMMODEL_H
 
 #undef foreach
-#include "BinOM/src/binom/includes/binom.h"
-//#include "include/binom/includes/binom.h"
+//#include "BinOM/src/binom/includes/binom.h"
+#include "include/binom/includes/binom.h"
 #include <QString>
 #include <QObject>
 #include <QVariant>

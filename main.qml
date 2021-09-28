@@ -14,7 +14,7 @@ Window {
     Material.theme: Material.Dark;
     Material.background: "#101018";
     Material.primary: "#303038";
-    Material.accent: Material.BlueGrey;
+    Material.accent: "#669bd1";
 
     FileDialog {
         id: file_dialog;
@@ -23,7 +23,8 @@ Window {
         nameFilters: [ "BinOM files (*.binom *.binomdb)", "All files (*)" ]
 
         onAccepted: {
-          BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{3})/,""));
+          if(BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{3})/,"")))
+            main_content.currentIndex = 1;
         }
 
         onRejected: {
@@ -56,18 +57,21 @@ Window {
             ToolButton {
                 width: 50;
                 icon.source: "qrc:/icons/icons/folder_white_24dp.svg";
+                icon.color: main_content.currentIndex == 0? Material.accent : "#FFFFFF";
                 onClicked: main_content.currentIndex = 0;
             }
 
             ToolButton {
                 width: 50;
                 icon.source: "qrc:/icons/icons/account_tree_white_24dp.svg";
+                icon.color: main_content.currentIndex == 1? Material.accent : "#FFFFFF";
                 onClicked: main_content.currentIndex = 1;
             }
 
             ToolButton {
                 width: 50;
                 icon.source: "qrc:/icons/icons/settings_white_24dp.svg";
+                icon.color: main_content.currentIndex == 2? Material.accent : "#FFFFFF";
                 onClicked: main_content.currentIndex = 2;
             }
         }

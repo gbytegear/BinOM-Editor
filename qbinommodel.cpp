@@ -24,10 +24,12 @@ void QBinOMModel::buildData(QVariantList& data, binom::Path path, binom::NodeVis
     bool is_open = opened.contains(QString::fromStdString(child_path.toString()));
     data.push_back(QVariantMap {
                      {"type", binom::toTypeString(child.getType())},
+                     {"type_class", binom::toTypeString(child.getTypeClass())},
                      {"path", QString::fromStdString(child_path.toString())},
                      {"is_open", is_open},
                      {"key", (node_is_object? QVariant(QString::fromStdString(*child.getName())) : QVariant(qulonglong(index - 1)))},
                      {"depth", QVariant(depth)},
+                     {"is_value_ref", child.isValueRef()},
                      {"value", (child.getTypeClass() == binom::VarTypeClass::primitive)
                                ? QVariant(qulonglong(child.getValue().asUi64()))
                                : (child.getType() == binom::VarType::byte_array)
@@ -46,26 +48,18 @@ void QBinOMModel::buildData(QVariantList& data, binom::Path path, binom::FileNod
 
     binom::Path child_path = (node_is_object? (path + *child.getName()) : (path + index++));
     bool is_open = opened.contains(QString::fromStdString(child_path.toString()));
-    if(child.getTypeClass() == binom::VarTypeClass::primitive) try {
-      std::clog << child.getVariable();
-    } catch(binom::Exception& except) {
-      qDebug() << "Node type: " << QString(binom::toTypeString(child.getType()));
-      qDebug() << "Node index: " << child.getNodeIndex();
-      if(auto name = child.getName(); name)
-        qDebug() << "Node name: " << QString::fromStdString(*name) << '\n';
-      qDebug() << "Exception: " << QString::fromStdString(except.full()) << '\n';
-      return;
-    }
-
+    binom::VarType type = child.getType();
     data.push_back(QVariantMap {
-                     {"type", binom::toTypeString(child.getType())},
+                     {"type", binom::toTypeString(type)},
+                     {"type_class", binom::toTypeString(binom::toTypeClass(type))},
                      {"path", QString::fromStdString(child_path.toString())},
                      {"is_open", is_open},
                      {"key", (node_is_object? QVariant(QString::fromStdString(*child.getName())) : QVariant(qulonglong(index - 1)))},
                      {"depth", QVariant(depth)},
-                     {"value", (child.getTypeClass() == binom::VarTypeClass::primitive)
+                     {"is_value_ref", child.isValueRef()},
+                     {"value", (binom::toTypeClass(type) == binom::VarTypeClass::primitive)
                                ? QVariant(qulonglong(child.getVariable().getValue().asUi64()))
-                               : (child.getType() == binom::VarType::byte_array)
+                               : (type == binom::VarType::byte_array)
                                ? QVariant(QString::fromStdString(child.getVariable().toBufferArray()))
                                : QVariant()}
                    });

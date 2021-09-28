@@ -19,6 +19,7 @@ public:
   typedef const byte* const_iterator;
 
   ByteArray() = default;
+  ByteArray(decltype(nullptr)) : ByteArray() {}
   ByteArray(const void* buffer, ui64 size);
   ByteArray(const ByteArray& other);
   ByteArray(ByteArray&& other);

@@ -74,7 +74,9 @@ bool QBinOM::openFile(QString file_path) {
   if(!fs::exists(path)) return false;
   binom::FileType file_type = binom::checkFileType(file_path.toStdString());
   if(file_type == binom::FileType::undefined_file) return false;
-  files.emplace(QString::fromStdString(path.filename().string()), std::unique_ptr<BinOMFile>(new BinOMFile(file_type, file_path)));
+  QString file_name = QString::fromStdString(path.filename().string());
+  files.emplace(file_name, std::unique_ptr<BinOMFile>(new BinOMFile(file_type, file_path)));
+  selectFile(std::move(file_name));
 //  history.pushBack(binom::vobj{{"path", path.string()}});
   emit openFilesChanged(getOpenFiles());
   emit historyChanged(getHistory());
@@ -86,6 +88,7 @@ void QBinOM::closeFile(QString file_name) {
   if(it == selected_file) {
     selected_file = files.end();
     emit isFileSelectedChanged(selected_file != files.cend());
+    emit treeModelChanged(QVariantList());
   }
   if(it != files.cend())
     files.erase(it);

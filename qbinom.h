@@ -62,6 +62,7 @@ QDesktopServices::storageLocation(QDesktopServices::DataLocation)
   Q_PROPERTY(QVariantList open_files READ getOpenFiles NOTIFY openFilesChanged)
   Q_PROPERTY(QVariantList tree_model READ getTreeModel NOTIFY treeModelChanged)
   Q_PROPERTY(QVariantList files_history READ getHistory NOTIFY historyChanged)
+//  Q_PROPERTY()
   Q_OBJECT
 
 public:
@@ -92,6 +93,9 @@ public:
     }
     return files_info;
   }
+
+  binom::Variable tryConvert(QVariant value, binom::VarType type);
+  Q_INVOKABLE bool setNode(QString path, QVariant value);
 
   QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
   QVariantList getHistory();

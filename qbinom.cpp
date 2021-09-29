@@ -101,6 +101,155 @@ bool QBinOM::selectFile(QString file_name) {
   return selected_file != files.cend();
 }
 
+binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
+  switch (type) {
+    case binom::VarType::byte:
+      switch (value.type()) {
+        case QVariant::Bool:
+        return binom::Variable(static_cast<binom::ui8>(value.toBool()));
+        case QVariant::Int:
+        return binom::Variable(static_cast<binom::ui8>(value.toInt()));
+        case QVariant::UInt:
+        return binom::Variable(static_cast<binom::ui8>(value.toUInt()));
+        case QVariant::LongLong:
+        return binom::Variable(static_cast<binom::ui8>(value.toLongLong()));
+        case QVariant::ULongLong:
+        return binom::Variable(static_cast<binom::ui8>(value.toULongLong()));
+        case QVariant::Double:
+        return binom::Variable(static_cast<binom::ui8>(value.toDouble()));
+        case QVariant::Char:
+        return binom::Variable(static_cast<binom::ui8>(value.toChar().unicode()));
+        default: return binom::Variable();
+      }
+
+    case binom::VarType::word:
+      switch (value.type()) {
+        case QVariant::Bool:
+        return binom::Variable(static_cast<binom::ui16>(value.toBool()));
+        case QVariant::Int:
+        return binom::Variable(static_cast<binom::ui16>(value.toInt()));
+        case QVariant::UInt:
+        return binom::Variable(static_cast<binom::ui16>(value.toUInt()));
+        case QVariant::LongLong:
+        return binom::Variable(static_cast<binom::ui16>(value.toLongLong()));
+        case QVariant::ULongLong:
+        return binom::Variable(static_cast<binom::ui16>(value.toULongLong()));
+        case QVariant::Double:
+        return binom::Variable(static_cast<binom::ui16>(value.toDouble()));
+        case QVariant::Char:
+        return binom::Variable(static_cast<binom::ui16>(value.toChar().unicode()));
+        default: return binom::Variable();
+      }
+
+    case binom::VarType::dword:
+      switch (value.type()) {
+        case QVariant::Bool:
+        return binom::Variable(static_cast<binom::ui32>(value.toBool()));
+        case QVariant::Int:
+        return binom::Variable(static_cast<binom::ui32>(value.toInt()));
+        case QVariant::UInt:
+        return binom::Variable(static_cast<binom::ui32>(value.toUInt()));
+        case QVariant::LongLong:
+        return binom::Variable(static_cast<binom::ui32>(value.toLongLong()));
+        case QVariant::ULongLong:
+        return binom::Variable(static_cast<binom::ui32>(value.toULongLong()));
+        case QVariant::Double:
+        return binom::Variable(static_cast<binom::f32>(value.toDouble()));
+        case QVariant::Char:
+        return binom::Variable(static_cast<binom::ui32>(value.toChar().unicode()));
+        default: return binom::Variable();
+      }
+
+    case binom::VarType::qword:
+      switch (value.type()) {
+        case QVariant::Bool:
+        return binom::Variable(static_cast<binom::ui64>(value.toBool()));
+        case QVariant::Int:
+        return binom::Variable(static_cast<binom::ui64>(value.toInt()));
+        case QVariant::UInt:
+        return binom::Variable(static_cast<binom::ui64>(value.toUInt()));
+        case QVariant::LongLong:
+        return binom::Variable(static_cast<binom::ui64>(value.toLongLong()));
+        case QVariant::ULongLong:
+        return binom::Variable(static_cast<binom::ui64>(value.toULongLong()));
+        case QVariant::Double:
+        return binom::Variable(static_cast<binom::f64>(value.toDouble()));
+        case QVariant::Char:
+        return binom::Variable(static_cast<binom::ui64>(value.toChar().unicode()));
+        default: return binom::Variable();
+      }
+
+    case binom::VarType::byte_array: {
+      switch (value.type()) {
+        case QVariant::List:{
+          binom::BufferArray data(binom::VarType::byte_array);
+          for(auto element : value.toList()) {
+            binom::Variable var_element = tryConvert(element, binom::VarType::byte);
+            if(var_element.isNull()) return binom::Variable();
+            data.pushBack(var_element.getValue().asUi64());
+          }
+          return data;
+        }
+        case QVariant::String:
+        return binom::Variable(value.toString().toStdString());
+
+        case QVariant::StringList:{
+          binom::BufferArray data(binom::VarType::byte_array);
+          for(auto element : value.toStringList()) {
+            binom::Variable var_element(element.toStdString());
+            data.pushBack(var_element.toBufferArray());
+          }
+          return data;
+        }
+
+        case QVariant::ByteArray: {
+          binom::ByteArray data(value.toByteArray().length());
+          memcpy(data.begin(), value.toByteArray().data(), data.length());
+          return binom::Variable(data);
+        }
+        default: return binom::Variable();
+      }
+    }
+
+    case binom::VarType::word_array:
+    break;
+    case binom::VarType::dword_array:
+    break;
+    case binom::VarType::qword_array:
+    break;
+    case binom::VarType::array:
+    break;
+    case binom::VarType::object:
+    break;
+    default: return binom::Variable();
+  }
+}
+
+bool QBinOM::setNode(QString path, QVariant value) {
+  std::unique_ptr<binom::NodeVisitorBase> node = selected_file->second->getRoot();
+  node->stepInside(binom::Path::fromString(path.toStdString()));
+
+  auto value_type = value.type();
+
+  if(value_type == QVariant::Invalid) return false;
+
+  switch (node->getTypeClass()) {
+    case binom::VarTypeClass::primitive:
+
+    break;
+    case binom::VarTypeClass::buffer_array:
+    break;
+    case binom::VarTypeClass::array:
+    break;
+    case binom::VarTypeClass::object:
+    break;
+    case binom::VarTypeClass::invalid_type:
+    break;
+
+  }
+
+}
+
 QVariantList QBinOM::getHistory() {
   return QVariantList();
 //  binom::FileNodeVisitor history = config.getRoot()("file_history");

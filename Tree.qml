@@ -32,7 +32,7 @@ Page {
           icon.source: (modelData.type === "file storage")
                        ? "qrc:/icons/icons/storage_white_24dp.svg"
                        : "qrc:/icons/icons/file_white_24dp.svg";
-          icon.color: tree_view_root.selected_container?((tree_view_root.selected_container.name === modelData.name)?"#669bd1":"#FFFFFF"):"#FFFFFF";
+          icon.color: tree_view_root.selected_container?((tree_view_root.selected_container.name === modelData.name)?app_root.accent:app_root.text_color):app_root.text_color;
           text: modelData.name;
           onClicked: {
             tree_view_root.selected_item = null;
@@ -55,13 +55,13 @@ Page {
         height: parent.height;
         width: 5;
         x: -5;
-        color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?"#669bd1":"#FFFFFF"):"#FFFFFF";
+        color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
       }
 
       Label {
         id: text_content
         anchors.centerIn: parent;
-        color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?"#669bd1":"#FFFFFF"):"#FFFFFF";
+        color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
         text: `${(modelData.type_class !== "primitive")?(modelData.is_open? "-" : "+"):""} ${modelData.key}: [${modelData.type}] ${(typeof(modelData.value)=="undefined")?"":modelData.value}`;
       }
       width: text_content.width + 10;
@@ -77,7 +77,6 @@ Page {
     visible: false;
     anchors {
       fill: parent;
-//      margins: 10;
     }
 
     header: ToolBar {

@@ -101,6 +101,27 @@ bool QBinOM::selectFile(QString file_name) {
   return selected_file != files.cend();
 }
 
+
+binom::VarType toVarType(QString type_string) {
+#define RET_TYPE(var_type) std::pair<QString, binom::VarType>{#var_type, binom::VarType::var_type}
+  static const QMap<QString, binom::VarType> str_switch = {
+    RET_TYPE(byte),
+    RET_TYPE(word),
+    RET_TYPE(dword),
+    RET_TYPE(qword),
+    RET_TYPE(byte_array),
+    RET_TYPE(word_array),
+    RET_TYPE(dword_array),
+    RET_TYPE(qword_array),
+    RET_TYPE(array),
+    RET_TYPE(object)
+  };
+#undef RET_TYPE
+  if(!str_switch.contains(type_string))
+    return binom::VarType::invalid_type;
+  return str_switch[std::move(type_string)];
+}
+
 binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
   switch (type) {
     case binom::VarType::byte:
@@ -212,42 +233,104 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
     }
 
     case binom::VarType::word_array:
-    break;
+      switch (value.type()) {
+        case QVariant::List:{
+          binom::BufferArray data(binom::VarType::byte_array);
+          for(auto element : value.toList()) {
+            binom::Variable var_element = tryConvert(element, binom::VarType::word);
+            if(var_element.isNull()) return binom::Variable();
+            data.pushBack(var_element.getValue().asUi64());
+          }
+          return data;
+        }
+        default: return binom::Variable();
+      }
+
+
     case binom::VarType::dword_array:
-    break;
+      switch (value.type()) {
+        case QVariant::List:{
+          binom::BufferArray data(binom::VarType::byte_array);
+          for(auto element : value.toList()) {
+            binom::Variable var_element = tryConvert(element, binom::VarType::dword);
+            if(var_element.isNull()) return binom::Variable();
+            data.pushBack(var_element.getValue().asUi64());
+          }
+          return data;
+        }
+        default: return binom::Variable();
+      }
+
     case binom::VarType::qword_array:
-    break;
+      switch (value.type()) {
+        case QVariant::List:{
+          binom::BufferArray data(binom::VarType::byte_array);
+          for(auto element : value.toList()) {
+            binom::Variable var_element = tryConvert(element, binom::VarType::qword);
+            if(var_element.isNull()) return binom::Variable();
+            data.pushBack(var_element.getValue().asUi64());
+          }
+          return data;
+        }
+        default: return binom::Variable();
+      }
+
     case binom::VarType::array:
-    break;
+      switch (value.type()) {
+        case QVariant::List:{
+          binom::Array data;
+          for(auto element : value.toList()) {
+            if(element.type() != QVariant::Map) return binom::Variable();
+            QVariantMap map_element = element.toMap();
+            if(!map_element.contains("type") || !map_element.contains("value")) return binom::Variable();
+            if(map_element["type"].type() != QVariant::String) return binom::Variable();
+            binom::Variable var_element = tryConvert(map_element["value"], toVarType(map_element["type"].toString()));
+            if(var_element.isNull()) return binom::Variable();
+            data.pushBack(var_element);
+          }
+          return data;
+        }
+        default: return binom::Variable();
+      }
+
     case binom::VarType::object:
+      switch (value.type()) {
+        case QVariant::List: {
+          binom::Object data;
+          for(auto element : value.toList()) {
+            if(element.type() != QVariant::Map) return binom::Variable();
+            QVariantMap map_element = element.toMap();
+            if(!map_element.contains("type") || !map_element.contains("value") ||
+               !map_element.contains("key_type") || !map_element.contains("key"))
+              return binom::Variable();
+            if(map_element["type"].type() != QVariant::String ||
+               map_element["key_type"].type() != QVariant::String)
+              return binom::Variable();
+            binom::VarType name_type = toVarType(map_element["key_type"].toString());
+            if(binom::toTypeClass(name_type) != binom::VarTypeClass::buffer_array)
+              return binom::Variable();
+            binom::Variable var_key = tryConvert(map_element["key"], name_type);
+            binom::Variable var_element = tryConvert(map_element["value"], toVarType(map_element["type"].toString()));
+            if(var_element.isNull() || var_key.isNull()) return binom::Variable();
+            data.insert(var_key.toBufferArray(), var_element);
+          }
+          return data;
+        }
+        default: return binom::Variable();
+      }
     break;
     default: return binom::Variable();
   }
 }
 
-bool QBinOM::setNode(QString path, QVariant value) {
-  std::unique_ptr<binom::NodeVisitorBase> node = selected_file->second->getRoot();
-  node->stepInside(binom::Path::fromString(path.toStdString()));
-
-  auto value_type = value.type();
-
-  if(value_type == QVariant::Invalid) return false;
-
-  switch (node->getTypeClass()) {
-    case binom::VarTypeClass::primitive:
-
-    break;
-    case binom::VarTypeClass::buffer_array:
-    break;
-    case binom::VarTypeClass::array:
-    break;
-    case binom::VarTypeClass::object:
-    break;
-    case binom::VarTypeClass::invalid_type:
-    break;
-
-  }
-
+bool QBinOM::setNode(QString path, QVariant value, QString expected_type_str) {
+  binom::Variable var_value = tryConvert(std::move(value), toVarType(expected_type_str));
+  if(var_value.isNull()) return false;
+  auto node = selected_file->second->getRoot();
+  if(node->isNull()) return false;
+  node->stepInside(binom::Path::fromString(path.toStdString())).setVariable(var_value);
+  emit treeModelChanged(getTreeModel());
+  return true;
 }
 
 QVariantList QBinOM::getHistory() {

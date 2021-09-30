@@ -4,6 +4,7 @@
         <file>Open.qml</file>
         <file>Tree.qml</file>
         <file>Settings.qml</file>
+        <file>NodeEditor.qml</file>
     </qresource>
     <qresource lang="svg" prefix="/icons">
         <file>icons/account_tree_white_24dp.svg</file>
@@ -15,5 +16,6 @@
         <file>icons/settings_white_24dp.svg</file>
         <file>icons/storage_white_24dp.svg</file>
         <file>icons/cancel_white_24dp.svg</file>
+        <file>icons/add_circle_white_24dp.svg</file>
     </qresource>
 </RCC>

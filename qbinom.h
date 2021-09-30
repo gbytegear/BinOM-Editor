@@ -95,7 +95,7 @@ public:
   }
 
   binom::Variable tryConvert(QVariant value, binom::VarType type);
-  Q_INVOKABLE bool setNode(QString path, QVariant value);
+  Q_INVOKABLE bool setNode(QString path, QVariant value, QString expected_type);
 
   QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
   QVariantList getHistory();

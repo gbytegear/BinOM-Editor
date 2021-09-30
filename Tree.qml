@@ -1,7 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
-import QtGraphicalEffects 1.0
 
 import BinOM 1.0
 
@@ -49,6 +48,7 @@ Page {
     id: tree_view;
     anchors.fill: parent;
     model: BinOM.tree_model;
+//    onModelChanged: console.log(JSON.stringify(model, null, 4));
     delegate: ToolButton {
 
       Rectangle {
@@ -71,47 +71,21 @@ Page {
     }
   }
 
-  Page{ // Editor
+  NodeEditor {
     id: editor_win;
-    property var add_mode: false
-    visible: false;
-    anchors {
-      fill: parent;
-    }
-
-    header: ToolBar {
-      RowLayout {
-        anchors.fill: parent;
-        clip: true;
-
-        Label {
-          Layout.alignment: Qt.AlignLeft;
-          Layout.leftMargin: 10;
-          font.pixelSize: 19;
-          text: editor_win.add_mode? `Add to node with path "${tree_view_root.selected_item.path}"` : `Edit node with path "${tree_view_root.selected_item.path}"`;
-        }
-
-
-        ToolButton {
-          Layout.alignment: Qt.AlignRight;
-          icon.source: "qrc:/icons/icons/cancel_white_24dp.svg"
-          onClicked: editor_win.visible = false;
-        }
-      }
-    }
-
+    node_properties: selected_item;
   }
 
-  DropShadow {
-    anchors.fill: editor_win;
-    visible: editor_win.visible;
-    horizontalOffset: 3;
-    verticalOffset: 3;
-    radius: 8.0;
-    samples: 17;
-    color: "#000000";
-    source: editor_win;
-  }
+//  DropShadow {
+//    anchors.fill: editor_win;
+//    visible: editor_win.visible;
+//    horizontalOffset: 3;
+//    verticalOffset: 3;
+//    radius: 8.0;
+//    samples: 17;
+//    color: "#000000";
+//    source: editor_win;
+//  }
 
 
   footer: ToolBar {

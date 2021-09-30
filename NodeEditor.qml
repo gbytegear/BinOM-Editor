@@ -9,7 +9,7 @@ import BinOM 1.0
 Page{ // Editor
   id: editor_win;
   property var node_properties: null;
-  property var add_mode: false
+  property var mode: false
   property var value: null;
   visible: false;
   anchors.fill: parent;
@@ -29,14 +29,24 @@ Page{ // Editor
         Layout.alignment: Qt.AlignLeft;
         Layout.leftMargin: 10;
         font.pixelSize: 19;
-        text: editor_win.add_mode? `Add to node with path "${tree_view_root.selected_item.path}"` : `Edit node with path "${tree_view_root.selected_item.path}"`;
+        text: (editor_win.mode === "add")
+              ? `Add to node with path "${tree_view_root.selected_item.path}"`
+              :(editor_win.mode === "edit")
+              ? `Edit node with path "${tree_view_root.selected_item.path}"`
+              :(editor_win.mode === "root")
+              ? "Edit root node of new file"
+              : "";
       }
 
 
       ToolButton {
         Layout.alignment: Qt.AlignRight;
         icon.source: "qrc:/icons/icons/cancel_white_24dp.svg"
-        onClicked: editor_win.visible = false;
+        onClicked: {
+          if(mode === "root")
+            main_content.currentIndex = 0;
+          editor_win.visible = false;
+        }
       }
     }
   } // HEADER
@@ -58,8 +68,6 @@ Page{ // Editor
         margins: 10;
       }
 
-      //    anchors.centerIn: parent;
-
 
 
       RowLayout {
@@ -67,6 +75,7 @@ Page{ // Editor
         ComboBox {
           Layout.fillWidth: true;
           id: var_type_input;
+          enabled: mode !== "add";
           model: [
             "byte",
             "word",
@@ -106,9 +115,38 @@ Page{ // Editor
               value_validator.top = 18446744073709551615;
               value_input.placeholderText = "-9223372036854775808...18446744073709551615";
               break;
+            case 8:
+
+              break;
             }
           }
         }
+      }
+
+
+
+      ColumnLayout {
+        visible: mode === "add" && var_type_input.currentIndex != 9;
+        RadioButton {
+          text: "Push front";
+        }
+        RadioButton {
+          TextField {
+            x: 50;
+            id: insert_index_input;
+            enabled: parent.checked;
+            placeholderText: `Index 0...${node_properties? node_properties.element_count : 0}`;
+            validator: IntValidator {
+              bottom: 0;
+              top: node_properties? node_properties.element_count : 0;
+            }
+          }
+        }
+        RadioButton {
+          checked: true
+          text: "Push back";
+        }
+
       }
 
 
@@ -159,6 +197,7 @@ Page{ // Editor
         Layout.fillWidth: true;
         id: confirm_button;
         text: "Confirm";
+        onClicked: console.log(JSON.stringify(element_model.getData()));
       }
 
 
@@ -233,6 +272,7 @@ Page{ // Editor
 
   Component { // ListView Buffer Array delegate
     id: value_element;
+
     RowLayout {
       anchors.margins: 10;
       width: parent.width;
@@ -242,7 +282,10 @@ Page{ // Editor
         validator: value_validator;
         placeholderText: value_input.placeholderText;
         text: value;
-        onTextChanged: {}
+        onTextChanged: {
+          if(validator)
+            value = text-1+1;
+        }
       }
 
       ToolButton {
@@ -270,9 +313,33 @@ Page{ // Editor
     }
   } // ListView Buffer Array delegate
 
+  function toPrimitiveType() {
+    switch(var_type_input.currentIndex) {
+    case 4: return "byte";
+    case 5: return "word";
+    case 6: return "dword";
+    case 7: return "qword";
+    default: return "invalid_type";
+    }
+  }
+
 
   ListModel {
     id: element_model;
+    function getData() {
+      let data = new Array;
+      for(let i = 0; i < count; ++i) {
+        let list_element = get(i);
+        let data_element = new Object;
+        if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7)
+          data_element = list_element.value;
+        else
+          for(let name in list_element)
+            data_element[name] = list_element[name];
+        data.push(data_element);
+      }
+      return data;
+    }
   }
 
 }

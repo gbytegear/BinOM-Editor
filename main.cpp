@@ -2,9 +2,12 @@
 #include <QQuickStyle>
 #include <QQmlApplicationEngine>
 #include <QFont>
+#include <QFontDatabase>
 #include <QDir>
 
 #include <qbinom.h>
+
+#include <QDebug>
 
 int main(int argc, char *argv[]) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -14,7 +17,9 @@ int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
 
   QQuickStyle::setStyle("Material");
-  app.setFont(QFont("Helvetica", 10));
+  app.setFont(QFont(QFontDatabase::applicationFontFamilies(QFontDatabase::addApplicationFont(":/font/fonts/Ubuntu/Ubuntu-Bold.ttf")).at(0)));
+//  qDebug() << "Font id: " << id;
+//  QString family = QFontDatabase::applicationFontFamilies(id).at(0);
 
   qmlRegisterSingletonType<QBinOM>("BinOM", 1, 0, "BinOM", [](QQmlEngine *engine, QJSEngine *script_engine) -> QObject * {
     Q_UNUSED(engine)

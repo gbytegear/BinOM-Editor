@@ -12,6 +12,11 @@ Page {
             width: parent.width;
             icon.source: "qrc:/icons/icons/file_white_24dp.svg";
             text: "Create file";
+            onClicked: {
+              binom_view.editor.mode = "root";
+              binom_view.editor.visible = true;
+              main_content.currentIndex = 1;
+            }
         }
 
         ToolButton {

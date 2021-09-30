@@ -30,6 +30,7 @@ void QBinOMModel::buildData(QVariantList& data, binom::Path path, binom::NodeVis
                      {"key", (node_is_object? QVariant(QString::fromStdString(*child.getName())) : QVariant(qulonglong(index - 1)))},
                      {"depth", QVariant(depth)},
                      {"is_value_ref", child.isValueRef()},
+                     {"element_count", child.getElementCount()},
                      {"value", (child.getTypeClass() == binom::VarTypeClass::primitive)
                                ? QVariant(qulonglong(child.getValue().asUi64()))
                                : (child.getType() == binom::VarType::byte_array)
@@ -57,6 +58,7 @@ void QBinOMModel::buildData(QVariantList& data, binom::Path path, binom::FileNod
                      {"key", (node_is_object? QVariant(QString::fromStdString(*child.getName())) : QVariant(qulonglong(index - 1)))},
                      {"depth", QVariant(depth)},
                      {"is_value_ref", child.isValueRef()},
+                     {"element_count", child.getElementCount()},
                      {"value", (binom::toTypeClass(type) == binom::VarTypeClass::primitive)
                                ? QVariant(qulonglong(child.getVariable().getValue().asUi64()))
                                : (type == binom::VarType::byte_array)

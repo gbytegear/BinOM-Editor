@@ -18,4 +18,14 @@
         <file>icons/cancel_white_24dp.svg</file>
         <file>icons/add_circle_white_24dp.svg</file>
     </qresource>
+    <qresource lang="ttf" prefix="/font">
+        <file>fonts/Ubuntu/Ubuntu-Regular.ttf</file>
+        <file>fonts/Ubuntu/Ubuntu-Bold.ttf</file>
+        <file>fonts/Ubuntu/Ubuntu-BoldItalic.ttf</file>
+        <file>fonts/Ubuntu/Ubuntu-Italic.ttf</file>
+        <file>fonts/Ubuntu/Ubuntu-Light.ttf</file>
+        <file>fonts/Ubuntu/Ubuntu-LightItalic.ttf</file>
+        <file>fonts/Ubuntu/Ubuntu-Medium.ttf</file>
+        <file>fonts/Ubuntu/Ubuntu-MediumItalic.ttf</file>
+    </qresource>
 </RCC>

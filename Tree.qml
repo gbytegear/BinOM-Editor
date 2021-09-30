@@ -7,6 +7,7 @@ import BinOM 1.0
 
 Page {
   id: tree_view_root;
+  property alias editor: editor_win;
   property var selected_item: null;
   property var selected_container: null;
   header: ToolBar {
@@ -71,21 +72,19 @@ Page {
     }
   }
 
+  Label {
+    anchors.centerIn: parent;
+    visible: !tree_view.model.length;
+    font.pixelSize: 25;
+//    color: app_root.accent;
+    text: "Select or create file in \"Open\" tab";
+    opacity: .125;
+  }
+
   NodeEditor {
     id: editor_win;
     node_properties: selected_item;
   }
-
-//  DropShadow {
-//    anchors.fill: editor_win;
-//    visible: editor_win.visible;
-//    horizontalOffset: 3;
-//    verticalOffset: 3;
-//    radius: 8.0;
-//    samples: 17;
-//    color: "#000000";
-//    source: editor_win;
-//  }
 
 
   footer: ToolBar {
@@ -97,7 +96,7 @@ Page {
         text: "Edit";
         visible: !!tree_view_root.selected_item;
         onClicked: {
-          editor_win.add_mode = false;
+          editor_win.mode = "edit";
           editor_win.visible = true;
         }
       }
@@ -106,7 +105,7 @@ Page {
         text: "Add";
         visible: (!!tree_view_root.selected_item)? (tree_view_root.selected_item.type_class !== "primitive") : false;
         onClicked: {
-          editor_win.add_mode = true;
+          editor_win.mode = "add";
           editor_win.visible = true;
         }
       }

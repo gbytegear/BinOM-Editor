@@ -32,13 +32,11 @@ Window {
     nameFilters: [ "BinOM files (*.binom *.binomdb)", "All files (*)" ]
 
     onAccepted: {
-      if(BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{2})/,"")))
+      if(BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{3})/,"")))
         main_content.currentIndex = 1;
     }
 
-    onRejected: {
-
-    }
+    onRejected: {}
   }
 
 
@@ -52,7 +50,7 @@ Window {
     interactive: false;
 
     Open {}
-    Tree {}
+    Tree {id: binom_view}
     Settings {}
   }
 

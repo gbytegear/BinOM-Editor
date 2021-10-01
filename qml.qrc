@@ -6,7 +6,7 @@
         <file>Settings.qml</file>
         <file>NodeEditor.qml</file>
     </qresource>
-    <qresource lang="svg" prefix="/icons">
+    <qresource prefix="/icons" lang="svg">
         <file>icons/account_tree_white_24dp.svg</file>
         <file>icons/attach_file_white_24dp.svg</file>
         <file>icons/file_white_24dp.svg</file>
@@ -17,8 +17,19 @@
         <file>icons/storage_white_24dp.svg</file>
         <file>icons/cancel_white_24dp.svg</file>
         <file>icons/add_circle_white_24dp.svg</file>
+        <file>icons/edit_white_24dp.svg</file>
+        <file>icons/byte_array_white_24dp.svg</file>
+        <file>icons/data_array_white_24dp.svg</file>
+        <file>icons/data_object_white_24dp.svg</file>
+        <file>icons/dword_array_white_24dp.svg</file>
+        <file>icons/qword_array_white_24dp.svg</file>
+        <file>icons/word_array_white_24dp.svg</file>
+        <file>icons/byte_white_24dp.svg</file>
+        <file>icons/dword_white_24dp.svg</file>
+        <file>icons/qword_white_24dp.svg</file>
+        <file>icons/word_white_24dp.svg</file>
     </qresource>
-    <qresource lang="ttf" prefix="/font">
+    <qresource prefix="/font" lang="ttf">
         <file>fonts/Ubuntu/Ubuntu-Regular.ttf</file>
         <file>fonts/Ubuntu/Ubuntu-Bold.ttf</file>
         <file>fonts/Ubuntu/Ubuntu-BoldItalic.ttf</file>

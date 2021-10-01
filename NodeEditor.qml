@@ -9,14 +9,26 @@ import BinOM 1.0
 Page{ // Editor
   id: editor_win;
   property var node_properties: null;
-  property var mode: false
-  property var value: null;
+  property var mode: null;
+  property var edit_stack: new Array;
+
   visible: false;
   anchors.fill: parent;
-  onVisibleChanged: {
-    if(visible) {
-      var_type_input.currentIndex = var_type_input.indexOfValue(node_properties.type);
-    }
+  function call(new_node_props, method) {
+    node_properties = new_node_props;
+    var_type_input.currentIndex = var_type_input.indexOfValue(node_properties.type);
+    mode = method;
+    visible = true;
+  }
+
+  function close() {
+    node_properties = null;
+    if(mode === "root")
+      main_content.currentIndex = 0;
+    mode = null;
+    visible = false;
+    if(value_element_model.count) value_element_model.clear();
+    if(variable_element_model.count) variable_element_model.clear();
   }
 
 
@@ -42,11 +54,7 @@ Page{ // Editor
       ToolButton {
         Layout.alignment: Qt.AlignRight;
         icon.source: "qrc:/icons/icons/cancel_white_24dp.svg"
-        onClicked: {
-          if(mode === "root")
-            main_content.currentIndex = 0;
-          editor_win.visible = false;
-        }
+        onClicked: close();
       }
     }
   } // HEADER
@@ -58,7 +66,7 @@ Page{ // Editor
       bottom: parent.bottom;
       horizontalCenter: parent.horizontalCenter;
     }
-    width: parent.width > 640? 640 : parent.width;
+    width: parent.width > 720? 720 : parent.width;
     anchors.rightMargin: anchors.leftMargin;
     orientation: Qt.Vertical;
 
@@ -75,7 +83,7 @@ Page{ // Editor
         ComboBox {
           Layout.fillWidth: true;
           id: var_type_input;
-          enabled: mode !== "add";
+          enabled: mode !== "add" && !node_properties.is_value_ref;
           model: [
             "byte",
             "word",
@@ -89,36 +97,8 @@ Page{ // Editor
             "object"
           ];
           onCurrentIndexChanged: {
-            if(element_model.count) element_model.clear();
-            switch(currentIndex) {
-            case 4:
-            case 0: // Byte
-              value_validator.bottom = -128;
-              value_validator.top = 255;
-              value_input.placeholderText = "-128...255";
-              break;
-            case 5:
-            case 1: // Word
-              value_validator.bottom = -32768;
-              value_validator.top = 65535;
-              value_input.placeholderText = "-32768...65535";
-              break;
-            case 6:
-            case 2: // DWord
-              value_validator.bottom = -2147483648;
-              value_validator.top = 4294967295;
-              value_input.placeholderText = "-2147483648...4294967295";
-              break;
-            case 7:
-            case 3: // QWord
-              value_validator.bottom = -9223372036854775808;
-              value_validator.top = 18446744073709551615;
-              value_input.placeholderText = "-9223372036854775808...18446744073709551615";
-              break;
-            case 8:
-
-              break;
-            }
+            if(value_element_model.count) value_element_model.clear();
+            if(variable_element_model.count) variable_element_model.clear();
           }
         }
       }
@@ -131,11 +111,15 @@ Page{ // Editor
           text: "Push front";
         }
         RadioButton {
+          Layout.fillWidth: true
           TextField {
-            x: 50;
+            anchors.right: parent.right;
+            anchors.left: parent.left;
+            anchors.leftMargin: 50;
+//            x: 50;
             id: insert_index_input;
             enabled: parent.checked;
-            placeholderText: `Index 0...${node_properties? node_properties.element_count : 0}`;
+            placeholderText: `Insert by index 0...${node_properties? node_properties.element_count : 0}`;
             validator: IntValidator {
               bottom: 0;
               top: node_properties? node_properties.element_count : 0;
@@ -155,8 +139,8 @@ Page{ // Editor
 
       RowLayout {
         id: input_type_input_row;
-        visible: var_type_input.currentIndex == 4;
-        Label {text: "Value: ";}
+        visible: false;
+        Label {text: "Input type: ";}
         ComboBox {
           Layout.fillWidth: true;
           id: input_type_input;
@@ -197,7 +181,7 @@ Page{ // Editor
         Layout.fillWidth: true;
         id: confirm_button;
         text: "Confirm";
-        onClicked: console.log(JSON.stringify(element_model.getData()));
+        onClicked: console.log(JSON.stringify(value_element_model.getData()));
       }
 
 
@@ -206,9 +190,23 @@ Page{ // Editor
       Button {
         Layout.fillWidth: true;
         text: "Create first element";
-        visible: !element_model.count && element_list.visible;
+        visible: (!value_element_model.count && (var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7)) ||
+                 (!variable_element_model.count && (var_type_input.currentIndex >= 8 && var_type_input.currentIndex <= 9));
         onClicked: {
-          element_model.insert(0, {value:0});
+          switch(var_type_input.currentIndex) {
+          case 4:
+          case 5:
+          case 6:
+          case 7:
+            value_element_model.insert(0, {value:0});
+          break;
+          case 8:
+            variable_element_model.insert(0, {type: "byte", value: []});
+          break;
+          case 9:
+            variable_element_model.insert(0, {type: "byte", key_type: "byte", key: null, value: []});
+          break;
+          }
         }
       }
     } // ColumnLayout
@@ -217,8 +215,6 @@ Page{ // Editor
       clip: true;
       id: element_list;
       visible: false;
-      model: element_model;
-      delegate: value_element;
     }
 
   } // SplitView
@@ -227,43 +223,104 @@ Page{ // Editor
 
 
   states: [
+
     State {
-      name: "primitive_state";
-      when: (var_type_input.currentIndex >= 0 && var_type_input.currentIndex <= 3);
+      name: "byte_state"
+      when: var_type_input.currentIndex == 0;
       PropertyChanges {target: value_input_row; visible: true;}
       PropertyChanges {target: confirm_button; enabled: !!value_input.text}
+      PropertyChanges {target: value_validator; bottom: -128; top: 255;}
+      PropertyChanges {target: value_input; placeholderText: "-128...255"}
     },
 
     State {
-      name: "buffer_array_state";
-      when: (var_type_input.currentIndex > 4 && var_type_input.currentIndex <= 7);
-      PropertyChanges {target: element_list; visible: true;}
+      name: "word_state"
+      when: var_type_input.currentIndex == 1;
+      PropertyChanges {target: value_input_row; visible: true;}
+      PropertyChanges {target: confirm_button; enabled: !!value_input.text}
+      PropertyChanges {target: value_validator; bottom: -32768; top: 65535;}
+      PropertyChanges {target: value_input; placeholderText: "-32768...65535"}
     },
 
     State {
-      name: "byte_array_array_state";
-      when: (var_type_input.currentIndex == 4 && input_type_input.currentIndex == 0);
-      PropertyChanges {target: element_list; visible: true;}
-      PropertyChanges {target: value_input_row; visible: false;}
+      name: "dword_state"
+      when: var_type_input.currentIndex == 2;
+      PropertyChanges {target: value_input_row; visible: true;}
+      PropertyChanges {target: confirm_button; enabled: !!value_input.text}
+      PropertyChanges {target: value_validator; bottom: -2147483648; top: 4294967295;}
+      PropertyChanges {target: value_input; placeholderText: "-2147483648...4294967295"}
     },
 
     State {
-      name: "byte_array_string_state";
-      when: (var_type_input.currentIndex == 4 && input_type_input.currentIndex == 1);
+      name: "qword_state"
+      when: var_type_input.currentIndex == 3;
+      PropertyChanges {target: value_input_row; visible: true;}
+      PropertyChanges {target: confirm_button; enabled: !!value_input.text}
+      PropertyChanges {target: value_validator; bottom: -9223372036854775808; top: 18446744073709551615;}
+      PropertyChanges {target: value_input; placeholderText: "-9223372036854775808...18446744073709551615"}
+    },
+
+    State {
+      name: "byte_array_array_edit_state";
+      when: var_type_input.currentIndex == 4 && input_type_input.currentIndex == 0;
+      PropertyChanges {target: input_type_input_row; visible: true;}
+      PropertyChanges {target: input_type_input_row; visible: true;}
+      PropertyChanges {target: element_list; visible: true; model: value_element_model; delegate: value_element}
+    },
+
+    State {
+      name: "byte_array_string_edit_state";
+      when: var_type_input.currentIndex == 4 && input_type_input.currentIndex == 1;
+      PropertyChanges {target: input_type_input_row; visible: true;}
       PropertyChanges {target: element_list; visible: false;}
       PropertyChanges {target: value_input_row; visible: true;}
-      PropertyChanges {target: value_input; validator: null;}
-      PropertyChanges {target: value_input; placeholderText: "Enter string...";}
+      PropertyChanges {target: value_input; validator: null; placeholderText: "Enter string...";}
     },
 
     State {
-      name: "byte_array_load_state";
-      when: (var_type_input.currentIndex == 4 && input_type_input.currentIndex == 2);
+      name: "byte_array_load_file_state";
+      when: var_type_input.currentIndex == 4 && input_type_input.currentIndex == 2;
+      PropertyChanges {target: input_type_input_row; visible: true;}
       PropertyChanges {target: open_load_dialog_button; visible: true;}
+    },
+
+    State {
+      name: "word_array_state";
+      when: var_type_input.currentIndex == 5;
+      PropertyChanges {target: element_list; visible: true; model: value_element_model; delegate: value_element}
+      PropertyChanges {target: value_validator; bottom: -32768; top: 65535;}
+      PropertyChanges {target: value_input; placeholderText: "-32768...65535"}
+    },
+
+    State {
+      name: "dword_array_state";
+      when: var_type_input.currentIndex == 6;
+      PropertyChanges {target: element_list; visible: true; model: value_element_model; delegate: value_element}
+      PropertyChanges {target: value_validator; bottom: -2147483648; top: 4294967295;}
+      PropertyChanges {target: value_input; placeholderText: "-2147483648...4294967295"}
+    },
+
+    State {
+      name: "qword_array_state";
+      when: var_type_input.currentIndex == 7;
+      PropertyChanges {target: element_list; visible: true; model: value_element_model; delegate: value_element}
+      PropertyChanges {target: value_validator; bottom: -9223372036854775808; top: 18446744073709551615;}
+      PropertyChanges {target: value_input; placeholderText: "-9223372036854775808...18446744073709551615"}
+    },
+
+    State {
+      name: "array";
+      when: var_type_input.currentIndex == 8;
+      PropertyChanges {target: element_list; visible: true; delegate: variable_element; model: variable_element_model;}
+    },
+
+    State {
+      name: "object";
+      when: var_type_input.currentIndex == 9;
+      PropertyChanges {target: element_list; visible: true; delegate: variable_element; model: variable_element_model;}
     }
 
   ]
-
 
 
   IntValidator {
@@ -291,7 +348,7 @@ Page{ // Editor
       ToolButton {
         icon.source: "qrc:/icons/icons/add_circle_white_24dp.svg";
         onClicked: {
-          element_model.insert(index + 1, {value:0});
+          value_element_model.insert(index + 1, {value:0});
         }
       }
 
@@ -299,19 +356,153 @@ Page{ // Editor
         text: "Add first";
         visible: !index;
         onClicked: {
-          element_model.insert(0, {value:0});
+          value_element_model.insert(0, {value:0});
         }
       }
 
       ToolButton {
         icon.source: "qrc:/icons/icons/cancel_white_24dp.svg";
         onClicked: {
-          element_model.remove(index);
+          value_element_model.remove(index);
         }
       }
 
     }
   } // ListView Buffer Array delegate
+
+
+  Component {
+    id: variable_element;
+
+    ColumnLayout {
+      width: parent.width;
+      RowLayout { // Key
+        width: parent.width;
+        visible: var_type_input.currentIndex == 9;
+        Label {text: "Key: "}
+        ComboBox {
+          id: key_type_input;
+          Layout.fillWidth: true;
+          model: [
+            "byte_array",
+            "word_array",
+            "dword_array",
+            "qword_array"
+          ];
+//          onCurrentIndexChanged: {
+//            type = currentText;
+//          }
+        }
+      } // Key
+
+      RowLayout { // Value
+        width: parent.width;
+
+        Component.onCompleted: {
+          value_type_input.currentIndex = value_type_input.indexOfValue(type);
+        }
+
+        Label {text: "Value: "}
+
+        ComboBox {
+          id: value_type_input;
+          Layout.fillWidth: true;
+          model: [
+            "byte",
+            "word",
+            "dword",
+            "qword",
+            "byte_array",
+            "word_array",
+            "dword_array",
+            "qword_array",
+            "array",
+            "object"
+          ];
+          onCurrentIndexChanged: {
+            type = currentText;
+          }
+        }
+
+        TextField {
+          id: value_input
+          Layout.fillWidth: true;
+          visible: false;
+          validator: IntValidator {
+            id: element_value_validator;
+          }
+        }
+
+        ToolButton {
+          id: edit_button;
+          icon.source: "qrc:/icons/icons/edit_white_24dp.svg";
+        }
+
+        states: [
+          State {
+            name: "byte_state"
+            when: value_type_input.currentIndex == 0;
+            PropertyChanges {target: edit_button; visible: false;}
+            PropertyChanges {target: value_input; visible: true; placeholderText: "-128...255"}
+            PropertyChanges {target: element_value_validator; bottom: -128; top: 255;}
+          },
+
+          State {
+            name: "word_state"
+            when: value_type_input.currentIndex == 1;
+            PropertyChanges {target: edit_button; visible: false;}
+            PropertyChanges {target: value_input; visible: true; placeholderText: "-32768...65535"}
+            PropertyChanges {target: element_value_validator; bottom: -32768; top: 65535;}
+          },
+
+          State {
+            name: "dword_state"
+            when: value_type_input.currentIndex == 2;
+            PropertyChanges {target: edit_button; visible: false;}
+            PropertyChanges {target: value_input; visible: true; placeholderText: "-2147483648...4294967295"}
+            PropertyChanges {target: element_value_validator; bottom: -2147483648; top: 4294967295;}
+          },
+
+          State {
+            name: "qword_state"
+            when: value_type_input.currentIndex == 3;
+            PropertyChanges {target: edit_button; visible: false;}
+            PropertyChanges {target: value_input; visible: true; placeholderText: "-9223372036854775808...18446744073709551615"}
+            PropertyChanges {target: element_value_validator; bottom: -9223372036854775808; top: 18446744073709551615;}
+          }
+        ]
+
+      } // Value
+
+
+      RowLayout {
+        anchors.horizontalCenter: parent.horizontalCenter;
+        ToolButton {
+          icon.source: "qrc:/icons/icons/add_circle_white_24dp.svg";
+          onClicked: {
+            variable_element_model.insert(index + 1, {type: "byte", value: []});
+          }
+        }
+
+        ToolButton {
+          text: "Add first";
+          visible: !index;
+          onClicked: {
+            variable_element_model.insert(0, {type: "byte", value: []});
+          }
+        }
+
+        ToolButton {
+          icon.source: "qrc:/icons/icons/cancel_white_24dp.svg";
+          onClicked: {
+            variable_element_model.remove(index);
+          }
+        }
+      }
+
+
+    }
+  }
 
   function toPrimitiveType() {
     switch(var_type_input.currentIndex) {
@@ -325,20 +516,38 @@ Page{ // Editor
 
 
   ListModel {
-    id: element_model;
+    id: value_element_model;
+    function getData() {
+      let data = new Array;
+      for(let i = 0; i < count; ++i) {
+        let list_element = get(i);
+        let data_element = list_element.value;
+        data.push(data_element);
+      }
+      return data;
+    }
+
+    function setData(data) {
+
+    }
+  }
+
+  ListModel {
+    id: variable_element_model;
     function getData() {
       let data = new Array;
       for(let i = 0; i < count; ++i) {
         let list_element = get(i);
         let data_element = new Object;
-        if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7)
-          data_element = list_element.value;
-        else
-          for(let name in list_element)
-            data_element[name] = list_element[name];
+        for(let name in list_element)
+          data_element[name] = list_element[name];
         data.push(data_element);
       }
       return data;
+    }
+
+    function setData(data) {
+
     }
   }
 

@@ -129,17 +129,17 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
         case QVariant::Bool:
         return binom::Variable(static_cast<binom::ui8>(value.toBool()));
         case QVariant::Int:
-        return binom::Variable(static_cast<binom::ui8>(value.toInt()));
+        return binom::Variable(static_cast<binom::i8>(value.toInt()));
         case QVariant::UInt:
         return binom::Variable(static_cast<binom::ui8>(value.toUInt()));
         case QVariant::LongLong:
-        return binom::Variable(static_cast<binom::ui8>(value.toLongLong()));
+        return binom::Variable(static_cast<binom::i8>(value.toLongLong()));
         case QVariant::ULongLong:
         return binom::Variable(static_cast<binom::ui8>(value.toULongLong()));
         case QVariant::Double:
-        return binom::Variable(static_cast<binom::ui8>(value.toDouble()));
+        return binom::Variable(static_cast<binom::i8>(value.toDouble()));
         case QVariant::Char:
-        return binom::Variable(static_cast<binom::ui8>(value.toChar().unicode()));
+        return binom::Variable(static_cast<binom::i8>(value.toChar().unicode()));
         default: return binom::Variable();
       }
 
@@ -148,17 +148,17 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
         case QVariant::Bool:
         return binom::Variable(static_cast<binom::ui16>(value.toBool()));
         case QVariant::Int:
-        return binom::Variable(static_cast<binom::ui16>(value.toInt()));
+        return binom::Variable(static_cast<binom::i16>(value.toInt()));
         case QVariant::UInt:
         return binom::Variable(static_cast<binom::ui16>(value.toUInt()));
         case QVariant::LongLong:
-        return binom::Variable(static_cast<binom::ui16>(value.toLongLong()));
+        return binom::Variable(static_cast<binom::i16>(value.toLongLong()));
         case QVariant::ULongLong:
         return binom::Variable(static_cast<binom::ui16>(value.toULongLong()));
         case QVariant::Double:
-        return binom::Variable(static_cast<binom::ui16>(value.toDouble()));
+        return binom::Variable(static_cast<binom::i16>(value.toDouble()));
         case QVariant::Char:
-        return binom::Variable(static_cast<binom::ui16>(value.toChar().unicode()));
+        return binom::Variable(static_cast<binom::i16>(value.toChar().unicode()));
         default: return binom::Variable();
       }
 
@@ -167,17 +167,17 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
         case QVariant::Bool:
         return binom::Variable(static_cast<binom::ui32>(value.toBool()));
         case QVariant::Int:
-        return binom::Variable(static_cast<binom::ui32>(value.toInt()));
+        return binom::Variable(static_cast<binom::i32>(value.toInt()));
         case QVariant::UInt:
         return binom::Variable(static_cast<binom::ui32>(value.toUInt()));
         case QVariant::LongLong:
-        return binom::Variable(static_cast<binom::ui32>(value.toLongLong()));
+        return binom::Variable(static_cast<binom::i32>(value.toLongLong()));
         case QVariant::ULongLong:
         return binom::Variable(static_cast<binom::ui32>(value.toULongLong()));
         case QVariant::Double:
         return binom::Variable(static_cast<binom::f32>(value.toDouble()));
         case QVariant::Char:
-        return binom::Variable(static_cast<binom::ui32>(value.toChar().unicode()));
+        return binom::Variable(static_cast<binom::i32>(value.toChar().unicode()));
         default: return binom::Variable();
       }
 
@@ -186,17 +186,17 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
         case QVariant::Bool:
         return binom::Variable(static_cast<binom::ui64>(value.toBool()));
         case QVariant::Int:
-        return binom::Variable(static_cast<binom::ui64>(value.toInt()));
+        return binom::Variable(static_cast<binom::i64>(value.toInt()));
         case QVariant::UInt:
         return binom::Variable(static_cast<binom::ui64>(value.toUInt()));
         case QVariant::LongLong:
-        return binom::Variable(static_cast<binom::ui64>(value.toLongLong()));
+        return binom::Variable(static_cast<binom::i64>(value.toLongLong()));
         case QVariant::ULongLong:
         return binom::Variable(static_cast<binom::ui64>(value.toULongLong()));
         case QVariant::Double:
         return binom::Variable(static_cast<binom::f64>(value.toDouble()));
         case QVariant::Char:
-        return binom::Variable(static_cast<binom::ui64>(value.toChar().unicode()));
+        return binom::Variable(static_cast<binom::i64>(value.toChar().unicode()));
         default: return binom::Variable();
       }
 
@@ -235,7 +235,7 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
     case binom::VarType::word_array:
       switch (value.type()) {
         case QVariant::List:{
-          binom::BufferArray data(binom::VarType::byte_array);
+          binom::BufferArray data(binom::VarType::word_array);
           for(auto element : value.toList()) {
             binom::Variable var_element = tryConvert(element, binom::VarType::word);
             if(var_element.isNull()) return binom::Variable();
@@ -250,7 +250,7 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
     case binom::VarType::dword_array:
       switch (value.type()) {
         case QVariant::List:{
-          binom::BufferArray data(binom::VarType::byte_array);
+          binom::BufferArray data(binom::VarType::dword_array);
           for(auto element : value.toList()) {
             binom::Variable var_element = tryConvert(element, binom::VarType::dword);
             if(var_element.isNull()) return binom::Variable();
@@ -264,7 +264,7 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
     case binom::VarType::qword_array:
       switch (value.type()) {
         case QVariant::List:{
-          binom::BufferArray data(binom::VarType::byte_array);
+          binom::BufferArray data(binom::VarType::qword_array);
           for(auto element : value.toList()) {
             binom::Variable var_element = tryConvert(element, binom::VarType::qword);
             if(var_element.isNull()) return binom::Variable();

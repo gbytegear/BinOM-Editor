@@ -16,7 +16,7 @@ Window {
   property color background: "#131a21";
   property color primary: "#0c1016";
   property color accent: "#602dd3";
-  property color accent_second: "#ef263d";
+  property color accent_second: "#5fd462";
   property color text_color: "#2e3746";
   property color highlight_text_color: "#ffffff";
 
@@ -32,7 +32,7 @@ Window {
     nameFilters: [ "BinOM files (*.binom *.binomdb)", "All files (*)" ]
 
     onAccepted: {
-      if(BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{3})/,"")))
+      if(BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{2})/,"")))
         main_content.currentIndex = 1;
     }
 

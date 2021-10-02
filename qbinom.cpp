@@ -79,7 +79,7 @@ bool QBinOM::openFile(QString file_path) {
   selectFile(std::move(file_name));
 //  history.pushBack(binom::vobj{{"path", path.string()}});
   emit openFilesChanged(getOpenFiles());
-  emit historyChanged(getHistory());
+//  emit historyChanged(getHistory());
   return true;
 }
 
@@ -88,6 +88,7 @@ void QBinOM::closeFile(QString file_name) {
   if(it == selected_file) {
     selected_file = files.end();
     emit isFileSelectedChanged(selected_file != files.cend());
+    emit fileTypeChanged(getFileType());
     emit treeModelChanged(QVariantList());
   }
   if(it != files.cend())
@@ -98,6 +99,7 @@ bool QBinOM::selectFile(QString file_name) {
   selected_file = files.find(file_name);
   emit isFileSelectedChanged(selected_file != files.cend());
   emit treeModelChanged(getTreeModel());
+  emit fileTypeChanged(getFileType());
   return selected_file != files.cend();
 }
 

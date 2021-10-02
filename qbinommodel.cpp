@@ -6,10 +6,10 @@ QBinOMModel::operator QVariantList() {
   QVariantList data;
   switch (node->getVisitorType()) {
     case binom::VisitorType::ram_storage_visitor:
-      buildData(data, {}, node->toRAMVisitor());
+      buildData(data, binom::Path(), node->toRAMVisitor());
     break;
     case binom::VisitorType::file_storage_visitor:
-      buildData(data, {}, node->toFileVisitor());
+      buildData(data, binom::Path(), node->toFileVisitor());
     break;
   }
   return data;
@@ -30,13 +30,14 @@ void QBinOMModel::buildData(QVariantList& data, binom::Path path, binom::NodeVis
                      {"key", (node_is_object? QVariant(QString::fromStdString(*child.getName())) : QVariant(qulonglong(index - 1)))},
                      {"depth", QVariant(depth)},
                      {"is_value_ref", child.isValueRef()},
-                     {"element_count", child.getElementCount()},
+                     {"element_count", qulonglong(child.getElementCount())},
                      {"value", (child.getTypeClass() == binom::VarTypeClass::primitive)
-                               ? QVariant(qulonglong(child.getValue().asUi64()))
+                               ? qulonglong(child.getValue().asUi64())
                                : (child.getType() == binom::VarType::byte_array)
-                               ? QVariant(QString::fromStdString(child.getVariable().toBufferArray()))
+                               ? QString::fromStdString(child.getVariable().toBufferArray())
                                : QVariant()}
                    });
+
     if(is_open)
       buildData(data, child_path, child, depth + 1);
   }
@@ -58,13 +59,14 @@ void QBinOMModel::buildData(QVariantList& data, binom::Path path, binom::FileNod
                      {"key", (node_is_object? QVariant(QString::fromStdString(*child.getName())) : QVariant(qulonglong(index - 1)))},
                      {"depth", QVariant(depth)},
                      {"is_value_ref", child.isValueRef()},
-                     {"element_count", child.getElementCount()},
+                     {"element_count", qulonglong(child.getElementCount())},
                      {"value", (binom::toTypeClass(type) == binom::VarTypeClass::primitive)
-                               ? QVariant(qulonglong(child.getVariable().getValue().asUi64()))
+                               ? qulonglong(child.getVariable().getValue().asUi64())
                                : (type == binom::VarType::byte_array)
-                               ? QVariant(QString::fromStdString(child.getVariable().toBufferArray()))
+                               ? QString::fromStdString(child.getVariable().toBufferArray())
                                : QVariant()}
                    });
+
     if(is_open)
       buildData(data, child_path, child, depth + 1);
   }

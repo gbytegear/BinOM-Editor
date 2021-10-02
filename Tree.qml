@@ -17,7 +17,7 @@ Page {
       clip: true;
 
       ToolButton {
-        visible: BinOM.is_file_selected;
+        visible: BinOM.selected_file_type == "serialized storage";
         icon.source: "qrc:/icons/icons/save_white_24dp.svg";
       }
 
@@ -50,8 +50,9 @@ Page {
     id: tree_view;
     anchors.fill: parent;
     model: BinOM.tree_model;
-//    onModelChanged: console.log(JSON.stringify(model, null, 4));
     delegate: ToolButton {
+      width: text_content.width + 10 + height;
+      x: 5 + modelData.depth * 10;
 
       function getIconUrl() {
         switch(modelData.type) {
@@ -69,54 +70,85 @@ Page {
         }
       }
 
-//      icon.source: getIconUrl();
-//      icon.color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
+      function getColor() {
+        return tree_view_root.selected_item ?(
+                  (tree_view_root.selected_item.path === modelData.path)
+                  ? app_root.accent_second
+                  : app_root.highlight_text_color
+               ): app_root.highlight_text_color;
+      }
 
-//      color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
-//      text: `${(modelData.type_class !== "primitive")?(modelData.is_open? "-" : "+"):""} ${modelData.key}: [${modelData.type}] ${(typeof(modelData.value)=="undefined")?"":modelData.value}`;
-
-//      Rectangle {
-//        height: parent.height;
-//        width: 5;
-//        x: -5;
-//        color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
-//      }
-
-      Row {
+      RowLayout {
         anchors.fill: parent;
+        id: element_content;
+        Layout.alignment: Qt.AlignVCenter
 
-        Rectangle {
-          height: parent.height;
-          width: 5;
-          x: -5;
-          color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
+        Item {
+          Layout.fillHeight: true
+          width: 20;
+
+          Rectangle {
+            height: parent.height;
+            width: 5;
+            color: getColor();
+          }
+
+          Rectangle {
+            anchors.verticalCenter: parent.verticalCenter;
+            height: 5;
+            width: 20;
+            color: getColor();
+          }
+
+          Rectangle {
+            anchors.bottom: parent.bottom;
+            height: 5;
+            width: 15;
+            visible: modelData.is_open;
+            color: getColor();
+          }
+        }
+
+        Label {
+          color: getColor();
+          font.pixelSize: 25;
+          text: (modelData.type_class !== "primitive")?(modelData.is_open? "-" : "+"):"";
         }
 
         Image {
           id: node_icon;
-          anchors.verticalCenter: parent.verticalCenter;
           source: getIconUrl();
-          height: parent.height/2;
+          height: 50;
           width: height;
-          visible: false;
-        }
-
-        ColorOverlay {
-          anchors.fill: node_icon;
-          source: node_icon;
-          color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
+          visible: true;
+          ColorOverlay {
+            anchors.fill: node_icon;
+            source: node_icon;
+            color: getColor();
+          }
         }
 
         Label {
-          id: text_content
-          x: parent.height;
-          anchors.centerIn: parent;
-          color: tree_view_root.selected_item?((tree_view_root.selected_item.path === modelData.path)?app_root.accent_second:app_root.highlight_text_color):app_root.highlight_text_color;
-          text: `${(modelData.type_class !== "primitive")?(modelData.is_open? "-" : "+"):""} ${modelData.key}: [${modelData.type}] ${(typeof(modelData.value)=="undefined")?"":modelData.value}`;
+          id: text_content;
+          color: getColor();
+          text: `${modelData.key}: [${modelData.type}]${(typeof(modelData.value)=="undefined")?"("+modelData.element_count+")":" "+modelData.value}`;
         }
+
       }
-      width: text_content.width + 10 + height;
-      x: 5 + modelData.depth * 10;
+
+//      Glow {
+//        anchors.fill: element_content;
+//        radius: 12;
+//        samples: 25;
+//        visible: tree_view_root.selected_item ?(
+//                   (tree_view_root.selected_item.path === modelData.path)
+//                     ? true
+//                     : false
+//                   ): false;
+//        color: "#000000";
+//        source: element_content;
+//      }
+
       onClicked: tree_view_root.selected_item = modelData;
       onDoubleClicked: if(modelData.type_class !== "primitive") BinOM.switchNodeVisibility(modelData.path);
     }
@@ -138,6 +170,7 @@ Page {
     RowLayout {
       anchors.fill: parent;
       clip: true;
+      Layout.alignment: Qt.AlignVCenter
 
       ToolButton {
         icon.source: "qrc:/icons/icons/edit_white_24dp.svg"
@@ -155,9 +188,8 @@ Page {
 
       Label {
         Layout.fillWidth: true;
-        anchors.verticalCenter: parent.verticalCenter;
         text: tree_view_root.selected_item
-              ? `Selected: ${tree_view_root.selected_item.path}` : "";
+              ? `Selected: [${tree_view_root.selected_item.type}] ${tree_view_root.selected_item.path}` : "";
       }
     }
   }

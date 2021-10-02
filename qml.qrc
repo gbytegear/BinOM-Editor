@@ -5,8 +5,10 @@
         <file>Tree.qml</file>
         <file>Settings.qml</file>
         <file>NodeEditor.qml</file>
+        <file>ValueDelegate.qml</file>
+        <file>VariableDelegate.qml</file>
     </qresource>
-    <qresource prefix="/icons" lang="svg">
+    <qresource lang="svg" prefix="/icons">
         <file>icons/account_tree_white_24dp.svg</file>
         <file>icons/attach_file_white_24dp.svg</file>
         <file>icons/file_white_24dp.svg</file>
@@ -28,8 +30,9 @@
         <file>icons/dword_white_24dp.svg</file>
         <file>icons/qword_white_24dp.svg</file>
         <file>icons/word_white_24dp.svg</file>
+        <file>icons/reply_white_24dp.svg</file>
     </qresource>
-    <qresource prefix="/font" lang="ttf">
+    <qresource lang="ttf" prefix="/font">
         <file>fonts/Ubuntu/Ubuntu-Regular.ttf</file>
         <file>fonts/Ubuntu/Ubuntu-Bold.ttf</file>
         <file>fonts/Ubuntu/Ubuntu-BoldItalic.ttf</file>

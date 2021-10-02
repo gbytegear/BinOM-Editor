@@ -59,10 +59,10 @@ QDesktopServices::storageLocation(QDesktopServices::DataLocation)
   std::map<QString, std::unique_ptr<BinOMFile>>::iterator selected_file;
 
   Q_PROPERTY(bool is_file_selected READ isFileSelected NOTIFY isFileSelectedChanged)
+  Q_PROPERTY(QString selected_file_type READ getFileType NOTIFY fileTypeChanged)
   Q_PROPERTY(QVariantList open_files READ getOpenFiles NOTIFY openFilesChanged)
   Q_PROPERTY(QVariantList tree_model READ getTreeModel NOTIFY treeModelChanged)
   Q_PROPERTY(QVariantList files_history READ getHistory NOTIFY historyChanged)
-//  Q_PROPERTY()
   Q_OBJECT
 
 public:
@@ -100,11 +100,21 @@ public:
   QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
   QVariantList getHistory();
 
+  QString getFileType() const {
+    if(!isFileSelected()) return "undefined";
+    switch (selected_file->second->getType()) {
+      case binom::FileType::file_storage: return "file storage";
+      case binom::FileType::serialized_file_storage: return "serialized storage";
+      default: return "undefined";
+    }
+  }
+
 signals:
   void isFileSelectedChanged(bool is_file_selected);
   void openFilesChanged(QVariantList open_files);
   void treeModelChanged(QVariantList tree_mode);
   void historyChanged(QVariantList files_history);
+  void fileTypeChanged(QString selected_file_type);
 };
 
 #endif // QBINOM_H

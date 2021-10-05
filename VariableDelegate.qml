@@ -7,14 +7,6 @@ Component {
 
   ColumnLayout {
 
-    Component.onCompleted: {
-      let data = element_model.get(index);
-      if(data.type) value_type_input.currentText = value_type_input.indexOfValue(data.type);
-      if(value_type_input.currentText >= 0 && value_type_input.currentText <= 3)
-        value_input.text = data.value;
-      if(data.key_type) key_type_input.currentIndex = key_type_input.indexOfValue(data.key_type);
-    }
-
     width: parent.width;
     RowLayout { // Key
       width: parent.width;
@@ -29,7 +21,7 @@ Component {
           "dword_array",
           "qword_array"
         ];
-        onCurrentTextChanged: if(visible) element_model.setProperty(index, "key_type", currentText);
+        currentIndex: (typeof(key_type) == "string") ? indexOfValue(key_type): 0;
       }
     } // Key
 
@@ -53,10 +45,12 @@ Component {
           "array",
           "object"
         ];
+
         onCurrentTextChanged: {
           element_model.setProperty(index, "type", currentText);
-          if(currentIndex >= 4)
-            element_model.setProperty(index, "value", []);
+        }
+        Component.onCompleted: {
+          currentIndex = indexOfValue(element_model.get(index).type);
         }
       }
 
@@ -67,8 +61,17 @@ Component {
         validator: IntValidator {
           id: element_value_validator;
         }
-        text: "0";
-        onTextChanged: if(visible) /*element_model.setProperty(index, "value", text-1+1);*/ element_model.values[index] = text-1+1;
+        text: (typeof(value) == "numeber" || typeof(value) == "string")? value : 0;
+        onTextChanged: {
+          if(value_type_input.currentIndex == 4)
+            element_model.setProperty(index, "value", text);
+          else
+            element_model.setProperty(index, "value", text-1+1);
+        }
+        Component.onCompleted: {
+          let value = element_model.get(i).value;
+          if(value) text = value;
+        }
       }
 
       ToolButton {
@@ -118,7 +121,7 @@ Component {
       ToolButton {
         icon.source: "qrc:/icons/icons/add_circle_white_24dp.svg";
         onClicked: {
-          element_model.insert(index + 1, element_proto);
+          element_model.addElement(index);
         }
       }
 
@@ -126,14 +129,14 @@ Component {
         text: "Add first";
         visible: !index;
         onClicked: {
-          element_model.insert(0, element_proto);
+          element_model.addElement(0);
         }
       }
 
       ToolButton {
         icon.source: "qrc:/icons/icons/cancel_white_24dp.svg";
         onClicked: {
-          element_model.remove(index);
+          element_model.removeElement(index);
         }
       }
     }

@@ -23,7 +23,7 @@ Component { // ListView Buffer Array delegate
     ToolButton {
       icon.source: "qrc:/icons/icons/add_circle_white_24dp.svg";
       onClicked: {
-        element_model.insert(index + 1, {value:0});
+        element_model.addElement(index + 1);
       }
     }
 
@@ -31,14 +31,14 @@ Component { // ListView Buffer Array delegate
       text: "Add first";
       visible: !index;
       onClicked: {
-        element_model.insert(0, {value:0});
+        element_model.addElement(0);
       }
     }
 
     ToolButton {
       icon.source: "qrc:/icons/icons/cancel_white_24dp.svg";
       onClicked: {
-        element_model.remove(index);
+        element_model.removeElement(index);
       }
     }
 

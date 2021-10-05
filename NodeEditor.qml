@@ -19,7 +19,6 @@ Page{ // Editor
   property var node_properties: null;
   property var mode: null;
   property var edit_stack: new Array;
-  property var element_proto: null;
 
   visible: false;
   anchors.fill: parent;
@@ -232,7 +231,7 @@ Page{ // Editor
         text: "Create first element";
         visible: (!element_model.count && (var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7)) ||
                  (!element_model.count && (var_type_input.currentIndex >= 8 && var_type_input.currentIndex <= 9));
-        onClicked: element_model.insert(0, element_proto);
+        onClicked: element_model.addElement(0);
       }
     } // ColumnLayout
 
@@ -288,10 +287,10 @@ Page{ // Editor
     State {
       name: "byte_array_array_edit_state";
       when: var_type_input.currentIndex == 4 && input_type_input.currentIndex == 0;
-      PropertyChanges {target: editor_win; element_proto: Object({value: 0})}
+      PropertyChanges {target: editor_win; list_element_proto: Object({value: 0})}
       PropertyChanges {target: input_type_input_row; visible: true;}
       PropertyChanges {target: input_type_input_row; visible: true;}
-      PropertyChanges {target: element_list; visible: true; model: element_model; delegate: value_element}
+      PropertyChanges {target: element_list; visible: true; model: element_model; delegate: value_element;}
     },
 
     State {
@@ -313,7 +312,7 @@ Page{ // Editor
     State {
       name: "word_array_state";
       when: var_type_input.currentIndex == 5;
-      PropertyChanges {target: editor_win; element_proto: Object({value: 0})}
+      PropertyChanges {target: editor_win; list_element_proto: Object({value: 0})}
       PropertyChanges {target: element_list; visible: true; model: element_model; delegate: value_element}
       PropertyChanges {target: value_validator; bottom: -32768; top: 65535;}
       PropertyChanges {target: value_input; placeholderText: "-32768...65535"}
@@ -322,7 +321,7 @@ Page{ // Editor
     State {
       name: "dword_array_state";
       when: var_type_input.currentIndex == 6;
-      PropertyChanges {target: editor_win; element_proto: Object({value: 0})}
+      PropertyChanges {target: editor_win; list_element_proto: Object({value: 0})}
       PropertyChanges {target: element_list; visible: true; model: element_model; delegate: value_element}
       PropertyChanges {target: value_validator; bottom: -2147483648; top: 4294967295;}
       PropertyChanges {target: value_input; placeholderText: "-2147483648...4294967295"}
@@ -331,7 +330,7 @@ Page{ // Editor
     State {
       name: "qword_array_state";
       when: var_type_input.currentIndex == 7;
-      PropertyChanges {target: editor_win; element_proto: Object({value: 0})}
+      PropertyChanges {target: editor_win; list_element_proto: Object({value: 0})}
       PropertyChanges {target: element_list; visible: true; model: element_model; delegate: value_element}
       PropertyChanges {target: value_validator; bottom: -9223372036854775808; top: 18446744073709551615;}
       PropertyChanges {target: value_input; placeholderText: "-9223372036854775808...18446744073709551615"}
@@ -340,14 +339,14 @@ Page{ // Editor
     State {
       name: "array";
       when: var_type_input.currentIndex == 8;
-      PropertyChanges {target: editor_win; element_proto: Object({type: "byte", value: 0});}
+      PropertyChanges {target: editor_win; list_element_proto: Object({type: "byte"}); dynamic_list_element_proto: Object({value: 0})}
       PropertyChanges {target: element_list; visible: true; delegate: variable_element; model: element_model;}
     },
 
     State {
       name: "object";
       when: var_type_input.currentIndex == 9;
-      PropertyChanges {target: editor_win; element_proto: Object({type: "byte", key_type: "byte_array", key: "", value: 0})}
+      PropertyChanges {target: editor_win; list_element_proto: Object({type: "byte", key_type: "byte_array"}); dynamic_list_element_proto: Object({key: "", value: 0})}
       PropertyChanges {target: element_list; visible: true; delegate: variable_element; model: element_model;}
     }
 
@@ -370,38 +369,75 @@ Page{ // Editor
     }
   }
 
+  property var list_element_proto: null;
+  property var dynamic_list_element_proto: null;
+  property var dynamic_variables: [];
   ListModel {
-    property var values: [];
     id: element_model;
-    dynamicRoles: true;
+
+    function claerAll() {
+      clear();
+      if(dynamic_variables.length) dynamic_variables = new Array;
+    }
+
+    function addElement(index) {
+      if(dynamic_list_element_proto)
+        dynamic_variables.splice(index, 0, dynamic_list_element_proto);
+      if(list_element_proto)
+        insert(index, list_element_proto);
+    }
+
+    function removeElement(index) {
+      if(dynamic_list_element_proto)
+        dynamic_variables.splice(index, 1);
+    }
+
     function getData() {
       let data = new Array;
-      for(let i = 0; i < count; ++i)
+      for(let i = 0; i < count; ++i) {
         if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7) {
           data.push(get(i).value);
         } else if(var_type_input.currentIndex == 8 || var_type_input.currentIndex == 9) {
           let element_data = get(i);
+          let dynamic_element_data = dynamic_variables[i];
           let element = new Object;
-          for(let name in element_data)
-            switch(name) {
+          for(let name in element_data) {
+            switch(name){
             case "type": element.type = element_data.type; continue;
             case "key_type": element.key_type = element_data.key_type; continue;
+            }
+          }
+
+          for(let name in dynamic_element_data) {
+            switch(name){
             case "value": element.value = element_data.value; continue;
             case "key": element.key = element_data.key; continue;
             }
+          }
+
           data.push(element);
         } else return null;
+      }
       return data;
     }
 
     function setData(data) {
-      clear();
+      claerAll();
+      console.log("Set items in model:");
       data.forEach((element, index) => {
-
-                     append(element)
+                     console.log(`${index}:${JSON.stringify(element)}`);
+                     if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7) {
+                       append(element);
+                     } else if(var_type_input.currentIndex == 8) {
+                       dynamic_variables.push({type: element.type});
+                       append({value: element.value});
+                     } else if(var_type_input.currentIndex == 9) {
+                       dynamic_variables.push({type: element.type, key_type: element.key_type});
+                       append({value: element.value, key: element.key});
+                     }
                    });
-      console.log("Set data: ", JSON.stringify(data, null, 4));
     }
+
   }
 
 }

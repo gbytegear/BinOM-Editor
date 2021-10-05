@@ -60,6 +60,7 @@ QDesktopServices::storageLocation(QDesktopServices::DataLocation)
 
   Q_PROPERTY(bool is_file_selected READ isFileSelected NOTIFY isFileSelectedChanged)
   Q_PROPERTY(QString selected_file_type READ getFileType NOTIFY fileTypeChanged)
+  Q_PROPERTY(QVariant selected_file_name READ getFileName NOTIFY fileNameChanged)
   Q_PROPERTY(QVariantList open_files READ getOpenFiles NOTIFY openFilesChanged)
   Q_PROPERTY(QVariantList tree_model READ getTreeModel NOTIFY treeModelChanged)
   Q_PROPERTY(QVariantList files_history READ getHistory NOTIFY historyChanged)
@@ -109,12 +110,18 @@ public:
     }
   }
 
+  QVariant getFileName() const {
+    if(!isFileSelected()) return QVariant();
+    return selected_file->first;
+  }
+
 signals:
   void isFileSelectedChanged(bool is_file_selected);
   void openFilesChanged(QVariantList open_files);
   void treeModelChanged(QVariantList tree_mode);
   void historyChanged(QVariantList files_history);
   void fileTypeChanged(QString selected_file_type);
+  void fileNameChanged(QVariant selected_file_name);
 };
 
 #endif // QBINOM_H

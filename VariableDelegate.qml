@@ -5,9 +5,19 @@ import QtQuick.Layouts 1.12
 Component {
   id: variable_element;
 
+
   ColumnLayout {
 
-    width: parent.width;
+    anchors {
+      left: parent.left;
+      right: parent.right;
+    }
+
+    Component.onCompleted: {
+      console.log("Created element with index ", index);
+    }
+
+//    width: parent.width;
     RowLayout { // Key
       width: parent.width;
       visible: var_type_input.currentIndex === 9;
@@ -46,11 +56,18 @@ Component {
           "object"
         ];
 
-        onCurrentTextChanged: {
-          element_model.setProperty(index, "type", currentText);
-        }
+        currentIndex: indexOfValue(element_model.get(index).type);
+
         Component.onCompleted: {
-          currentIndex = indexOfValue(element_model.get(index).type);
+          console.log(index, " value_type_input: called Component.onCompleted, type: ", element_model.get(index).type);
+          currentIndex = indexOfValue(element_model.get(index).type)
+        }
+
+        onCurrentTextChanged: {
+//          console.log("value_type_input: called onCurrentTextChanged, type: ", currentText);
+          if((currentIndex == 8 || currentIndex == 9) && typeof(dynamic_variables[index].value) == "number")
+            dynamic_variables[index].value = [];
+          element_model.setProperty(index, "type", currentText);
         }
       }
 
@@ -61,16 +78,18 @@ Component {
         validator: IntValidator {
           id: element_value_validator;
         }
-        text: (typeof(value) == "numeber" || typeof(value) == "string")? value : 0;
-        onTextChanged: {
-          if(value_type_input.currentIndex == 4)
-            element_model.setProperty(index, "value", text);
-          else
-            element_model.setProperty(index, "value", text-1+1);
-        }
+
         Component.onCompleted: {
-          let value = element_model.get(i).value;
-          if(value) text = value;
+          console.log(index, " value_input: called Component.onCompleted");
+          text = (typeof(dynamic_variables[index].value) == "number")? dynamic_variables[index].value : 0;
+        }
+
+        onTextChanged: {
+//          console.log("value_input: called onTextChanged");
+          if(value_type_input.currentIndex == 4)
+            dynamic_variables[index].value = text;
+          else if(value_type_input.currentIndex >= 0 && value_type_input.currentIndex <= 3)
+            dynamic_variables[index].value = text-1+1;
         }
       }
 
@@ -121,7 +140,7 @@ Component {
       ToolButton {
         icon.source: "qrc:/icons/icons/add_circle_white_24dp.svg";
         onClicked: {
-          element_model.addElement(index);
+          element_model.addElement(index + 1);
         }
       }
 

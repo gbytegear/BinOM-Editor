@@ -89,6 +89,7 @@ void QBinOM::closeFile(QString file_name) {
     selected_file = files.end();
     emit isFileSelectedChanged(selected_file != files.cend());
     emit fileTypeChanged(getFileType());
+    emit fileNameChanged(getFileName());
     emit treeModelChanged(QVariantList());
   }
   if(it != files.cend())
@@ -100,6 +101,7 @@ bool QBinOM::selectFile(QString file_name) {
   emit isFileSelectedChanged(selected_file != files.cend());
   emit treeModelChanged(getTreeModel());
   emit fileTypeChanged(getFileType());
+  emit fileNameChanged(getFileName());
   return selected_file != files.cend();
 }
 

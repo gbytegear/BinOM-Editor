@@ -65,6 +65,14 @@ class Path::PathLiteral{
 public:
   PathLiteral(ui64 index);
   PathLiteral(int index);
+  PathLiteral(ui8arr byte_array);
+  PathLiteral(i8arr byte_array);
+  PathLiteral(ui16arr word_array);
+  PathLiteral(i16arr word_array);
+  PathLiteral(ui32arr dword_array);
+  PathLiteral(i32arr dword_array);
+  PathLiteral(ui64arr qword_array);
+  PathLiteral(i64arr qword_array);
   PathLiteral(BufferArray string);
   PathLiteral(const char* string);
   PathLiteral(const PathLiteral& other) = delete;

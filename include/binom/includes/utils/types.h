@@ -128,7 +128,6 @@ namespace binom {
   //! Cast VarType => Name of type
   inline const char* toTypeString(VarType type) {
     switch (type) {
-    case binom::VarType::end: return "end";
     case binom::VarType::byte:  return "byte";
     case binom::VarType::word: return "word";
     case binom::VarType::dword: return "dword";
@@ -139,6 +138,7 @@ namespace binom {
     case binom::VarType::qword_array: return "qword_array";
     case binom::VarType::array: return "array";
     case binom::VarType::object:  return "object";
+    case binom::VarType::end:
     default: return "invalid_type";
     }
   }
@@ -164,6 +164,64 @@ namespace binom {
     case binom::ValType::qword: return "qword";
     default: return "invalid_type";
     }
+  }
+
+  inline bool isstreq(const char* s1, const char* s2) {
+    while(true)
+      if(*s1 == *s2) {
+        if(!*s1) return true;
+        ++s1;
+        ++s2;
+        continue;
+      } else return false;
+  }
+
+  inline ValType toValueType(const char* str) {
+    if(isstreq(str, "byte"))
+      return ValType::byte;
+    elif(isstreq(str, "word"))
+        return ValType::word;
+    elif(isstreq(str, "dword"))
+        return ValType::dword;
+    elif(isstreq(str, "qword"))
+        return ValType::qword;
+    else return ValType::invalid_type;
+  }
+
+  inline VarTypeClass toVarTypeClass(const char* str) {
+    if(isstreq(str, "primitive"))
+      return VarTypeClass::primitive;
+    elif(isstreq(str, "buffer_array"))
+        return VarTypeClass::buffer_array;
+    elif(isstreq(str, "array"))
+        return VarTypeClass::array;
+    elif(isstreq(str, "object"))
+        return VarTypeClass::object;
+    else return VarTypeClass::invalid_type;
+  }
+
+  inline VarType toVarType(const char* str) {
+    if(isstreq(str, "byte"))
+      return VarType::byte;
+    elif(isstreq(str, "word"))
+        return VarType::word;
+    elif(isstreq(str, "dword"))
+        return VarType::dword;
+    elif(isstreq(str, "qword"))
+        return VarType::qword;
+    elif(isstreq(str, "byte_array"))
+        return VarType::byte_array;
+    elif(isstreq(str, "word_array"))
+        return VarType::word_array;
+    elif(isstreq(str, "dword_array"))
+        return VarType::dword_array;
+    elif(isstreq(str, "qword_array"))
+        return VarType::qword_array;
+    elif(isstreq(str, "array"))
+        return VarType::array;
+    elif(isstreq(str, "object"))
+        return VarType::object;
+    else return VarType::invalid_type;
   }
 
   //! Type class generic (may have any BinOM type)

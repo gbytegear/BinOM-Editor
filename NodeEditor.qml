@@ -50,23 +50,29 @@ Page{ // Editor
           ? (insert_index_input.text-1+1)
           : add_type.checkedButton.text;
 
-    console.log("Push test: ", JSON.stringify(form_data, null, 4));
+    console.log("Push form stack struct: ", JSON.stringify(form_data, null, 4));
     edit_stack.push(form_data);
 
-    element_model.clear();
-    var_type_input.currentIndex = var_type_input.indexOfValue(form_data.data[edit_index].type);
     editor_win.mode = "element";
+    var_type_input.currentIndex = var_type_input.indexOfValue(form_data.data[edit_index].type);
+    element_model.setData(form_data.data[edit_index].value);
   }
 
 
 
-  function pop() {
+  function popAndSave() {
     let form_data = edit_stack.pop();
     let current_data = element_model.getData();
     mode = form_data.mode;
     var_type_input.currentIndex = var_type_input.indexOfValue(form_data.type);
     form_data.data[form_data.edit_index].value = current_data;
-    console.log(JSON.stringify(form_data, null, 4));
+    element_model.setData(form_data.data);
+  }
+
+  function pop() {
+    let form_data = edit_stack.pop();
+    mode = form_data.mode;
+    var_type_input.currentIndex = var_type_input.indexOfValue(form_data.type);
     element_model.setData(form_data.data);
   }
 
@@ -125,7 +131,7 @@ Page{ // Editor
         ComboBox {
           Layout.fillWidth: true;
           id: var_type_input;
-          enabled: mode !== "add" && mode !== "element" && !node_properties.is_value_ref;
+          enabled: mode !== "add" && mode !== "element" && (node_properties?!node_properties.is_value_ref:true);
           model: [
             "byte",
             "word",
@@ -222,6 +228,7 @@ Page{ // Editor
         id: confirm_button;
         text: "Confirm";
         onClicked: {
+          if(mode === "element") popAndSave();
           console.log("\n", JSON.stringify(element_model.getData(), null, 4));
         }
       }
@@ -376,15 +383,16 @@ Page{ // Editor
     id: element_model;
 
     function claerAll() {
-      clear();
       if(dynamic_variables.length) dynamic_variables = new Array;
+      clear();
     }
 
     function addElement(index) {
+      console.log("Element proto;\nstatic:", JSON.stringify(list_element_proto), "\ndynamic:", JSON.stringify(dynamic_list_element_proto));
       if(dynamic_list_element_proto)
-        dynamic_variables.splice(index, 0, dynamic_list_element_proto);
+        dynamic_variables.splice(index, 0, Object.assign({}, dynamic_list_element_proto));
       if(list_element_proto)
-        insert(index, list_element_proto);
+        insert(index, Object.assign({}, list_element_proto));
     }
 
     function removeElement(index) {
@@ -397,25 +405,10 @@ Page{ // Editor
       for(let i = 0; i < count; ++i) {
         if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7) {
           data.push(get(i).value);
-        } else if(var_type_input.currentIndex == 8 || var_type_input.currentIndex == 9) {
-          let element_data = get(i);
-          let dynamic_element_data = dynamic_variables[i];
-          let element = new Object;
-          for(let name in element_data) {
-            switch(name){
-            case "type": element.type = element_data.type; continue;
-            case "key_type": element.key_type = element_data.key_type; continue;
-            }
-          }
-
-          for(let name in dynamic_element_data) {
-            switch(name){
-            case "value": element.value = element_data.value; continue;
-            case "key": element.key = element_data.key; continue;
-            }
-          }
-
-          data.push(element);
+        } else if(var_type_input.currentIndex == 8) {
+          data.push({type: get(i).type, value: dynamic_variables[i].value});
+        } else if(var_type_input.currentIndex == 9) {
+          data.push({type: get(i).type, key_type: get(i).key_type, value: dynamic_variables[i].value, key: dynamic_variables[i].key_type});
         } else return null;
       }
       return data;
@@ -424,18 +417,22 @@ Page{ // Editor
     function setData(data) {
       claerAll();
       console.log("Set items in model:");
-      data.forEach((element, index) => {
-                     console.log(`${index}:${JSON.stringify(element)}`);
-                     if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7) {
-                       append(element);
-                     } else if(var_type_input.currentIndex == 8) {
-                       dynamic_variables.push({type: element.type});
-                       append({value: element.value});
-                     } else if(var_type_input.currentIndex == 9) {
-                       dynamic_variables.push({type: element.type, key_type: element.key_type});
-                       append({value: element.value, key: element.key});
-                     }
-                   });
+      data.forEach(
+            (element, index) => {
+              console.log(`${index} try_set:${JSON.stringify(element)}`);
+              if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7) {
+                append(element);
+                console.log(`${index} static:${JSON.stringify(get(index))}; dynamic: null`);
+              } else if(var_type_input.currentIndex == 8) {
+                dynamic_variables.push({value: element.value});
+                append({type: element.type});
+                console.log(`${index} static:${JSON.stringify(get(index))}; dynamic: ${JSON.stringify(dynamic_variables[index])}`);
+              } else if(var_type_input.currentIndex == 9) {
+                dynamic_variables.push({value: element.value, key: element.key});
+                append({type: element.type, key_type: element.key_type});
+                console.log(`${index} static:${JSON.stringify(get(index))}; dynamic: ${JSON.stringify(dynamic_variables[index])}`);
+              }
+            });
     }
 
   }

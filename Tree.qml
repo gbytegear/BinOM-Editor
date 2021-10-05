@@ -33,7 +33,7 @@ Page {
           icon.source: (modelData.type === "file storage")
                        ? "qrc:/icons/icons/storage_white_24dp.svg"
                        : "qrc:/icons/icons/file_white_24dp.svg";
-          icon.color: tree_view_root.selected_container?((tree_view_root.selected_container.name === modelData.name)?app_root.accent:app_root.text_color):app_root.text_color;
+          icon.color: (BinOM.selected_file_name === modelData.name)?app_root.accent:app_root.text_color;
           text: modelData.name;
           onClicked: {
             tree_view_root.selected_item = null;

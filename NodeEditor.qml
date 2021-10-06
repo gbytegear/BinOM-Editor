@@ -29,6 +29,15 @@ Page{ // Editor
     visible = true;
   }
 
+  function getEditorData() {
+    if(var_type_input.currentIndex >= 0 && var_type_input.currentIndex <= 3)
+      return var_type_input.text-1+1;
+    if(state === "byte_array_string_edit_state")
+      return var_type_input.text;
+    if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 9)
+      return element_model.getData();
+  }
+
   function close() {
     node_properties = null;
     if(mode === "root")
@@ -38,12 +47,13 @@ Page{ // Editor
     if(element_model.count) element_model.clear();
   }
 
-  function push(edit_index) {
+  function push(edit_index, key_edit = false) {
     let form_data = {
       mode,
       type: var_type_input.currentText,
       data: element_model.getData(),
       edit_index,
+      key_edit
     };
     if(mode == "add")
       form_data["add_type"] = add_type.checkedButton.text == "By index"
@@ -54,18 +64,27 @@ Page{ // Editor
     edit_stack.push(form_data);
 
     editor_win.mode = "element";
-    var_type_input.currentIndex = var_type_input.indexOfValue(form_data.data[edit_index].type);
-    element_model.setData(form_data.data[edit_index].value);
+    var_type_input.currentIndex = var_type_input.indexOfValue(form_data.data[edit_index][key_edit?"key_type":"type"]);
+    element_model.setData(key_edit? form_data.data[edit_index].key : form_data.data[edit_index].value);
   }
 
 
 
   function popAndSave() {
     let form_data = edit_stack.pop();
-    let current_data = element_model.getData();
+    let current_data = null;
+    if(state === "byte_array_string_edit_state")
+      current_data = value_input.text;
+    else current_data = element_model.getData();
     mode = form_data.mode;
     var_type_input.currentIndex = var_type_input.indexOfValue(form_data.type);
-    form_data.data[form_data.edit_index].value = current_data;
+    if(form_data.key_edit)
+      form_data.data[form_data.edit_index].key = current_data;
+    else
+      form_data.data[form_data.edit_index].value = current_data;
+
+    console.log("Pop form stack struct: ", JSON.stringify(form_data, null, 4));
+
     element_model.setData(form_data.data);
   }
 
@@ -74,6 +93,123 @@ Page{ // Editor
     mode = form_data.mode;
     var_type_input.currentIndex = var_type_input.indexOfValue(form_data.type);
     element_model.setData(form_data.data);
+  }
+
+  function validate() {
+    if(var_type_input.currentIndex >= 0 && var_type_input.currentIndex <= 3)
+      return !!value_input.text.length;
+    if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7)
+      return true;
+
+    let array_validator = array_data => {
+      for (let index = 0; index < array_data.length; ++index) {
+        let element = array_data[0];
+        switch(element.type) {
+          case "byte": case "word": case "dword": case "qword":
+          if(typeof element.value != "number") return false;
+          continue
+
+          case "byte_array":
+          if(typeof element.value == "string") continue;
+          case "word_array": case "dword_array": case "qword_array":
+          if(typeof element.value != "object") {
+            return false;
+          }else if(element.value.constructor.name !== "Array") {
+            return false;
+          }
+          continue;
+
+          case "array":
+          if(typeof element.value != "object") {
+            return false;
+          }else if(element.value.constructor.name !== "Array") {
+            return false;
+          } else if(!array_validator(element.value)) {
+            return false;
+          }
+          continue;
+
+          case "object":
+          if(typeof element.value != "object") {
+            return false;
+          }else if(element.value.constructor.name !== "Array") {
+            return false;
+          } else if(!object_validator(element.value)) {
+            return false;
+          }
+          continue;
+          default: return false;
+        }
+      }
+      return true;
+    };
+
+    let object_validator = object_data => {
+      for (let index = 0; index < array_data.length; ++index) {
+        let element = array_data[0];
+
+        switch(element.key_type) {
+          case "byte_array":
+          if(typeof element.key == "string") {
+            if(!element.key.length) return false;
+            break;
+          }
+          case "word_array": case "dword_array": case "qword_array":
+          if(typeof element.key != "object") {
+            return false;
+          }else if(element.key.constructor.name !== "Array") {
+            if(!element.key.length) return false;
+            return false;
+          }
+          break;
+          default: return false;
+        }
+
+
+        switch(element.type) {
+          case "byte": case "word": case "dword": case "qword":
+          if(typeof element.value != "number") return false;
+          continue
+
+          case "byte_array":
+          if(typeof element.value == "string") continue;
+          case "word_array": case "dword_array": case "qword_array":
+          if(typeof element.value != "object") {
+            return false;
+          }else if(element.value.constructor.name !== "Array") {
+            return false;
+          }
+          continue;
+
+          case "array":
+          if(typeof element.value != "object") {
+            return false;
+          }else if(element.value.constructor.name !== "Array") {
+            return false;
+          } else if(!array_validator(element.value)) {
+            return false;
+          }
+          continue;
+
+          case "object":
+          if(typeof element.value != "object") {
+            return false;
+          }else if(element.value.constructor.name !== "Array") {
+            return false;
+          } else if(!object_validator(element.value)) {
+            return false;
+          }
+          continue;
+          default: return false;
+        }
+      }
+      return true;
+    };
+
+    if(var_type_input.currentIndex == 8)
+      return array_validator(element_model.getData());
+    if(var_type_input.currentIndex == 9)
+      return object_validator(element_model.getData());
   }
 
 
@@ -228,8 +364,17 @@ Page{ // Editor
         id: confirm_button;
         text: "Confirm";
         onClicked: {
-          if(mode === "element") popAndSave();
-          console.log("\n", JSON.stringify(element_model.getData(), null, 4));
+          switch(mode) {
+          case "element": popAndSave(); return;
+          case "edit":
+            if(validate())
+              BinOM.setNode(node_properties.path, getEditorData());
+            else
+              console.error("Invalid data");
+            return;
+          case "add": console.warn("Not implemented"); return;
+          case "root": console.warn("Not implemented"); return;
+          }
         }
       }
 
@@ -388,7 +533,6 @@ Page{ // Editor
     }
 
     function addElement(index) {
-      console.log("Element proto;\nstatic:", JSON.stringify(list_element_proto), "\ndynamic:", JSON.stringify(dynamic_list_element_proto));
       if(dynamic_list_element_proto)
         dynamic_variables.splice(index, 0, Object.assign({}, dynamic_list_element_proto));
       if(list_element_proto)
@@ -409,7 +553,7 @@ Page{ // Editor
         } else if(var_type_input.currentIndex == 8) {
           data.push({type: get(i).type, value: dynamic_variables[i].value});
         } else if(var_type_input.currentIndex == 9) {
-          data.push({type: get(i).type, key_type: get(i).key_type, value: dynamic_variables[i].value, key: dynamic_variables[i].key_type});
+          data.push({type: get(i).type, key_type: get(i).key_type, value: dynamic_variables[i].value, key: dynamic_variables[i].key});
         } else return null;
       }
       return data;
@@ -417,21 +561,16 @@ Page{ // Editor
 
     function setData(data) {
       claerAll();
-      console.log("Set items in model:");
       data.forEach(
             (element, index) => {
-              console.log(`${index} try_set:${JSON.stringify(element)}`);
               if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7) {
                 append(element);
-                console.log(`${index} static:${JSON.stringify(get(index))}; dynamic: null`);
               } else if(var_type_input.currentIndex == 8) {
                 dynamic_variables.push({value: element.value});
                 append({type: element.type});
-                console.log(`${index} static:${JSON.stringify(get(index))}; dynamic: ${JSON.stringify(dynamic_variables[index])}`);
               } else if(var_type_input.currentIndex == 9) {
                 dynamic_variables.push({value: element.value, key: element.key});
                 append({type: element.type, key_type: element.key_type});
-                console.log(`${index} static:${JSON.stringify(get(index))}; dynamic: ${JSON.stringify(dynamic_variables[index])}`);
               }
             });
     }

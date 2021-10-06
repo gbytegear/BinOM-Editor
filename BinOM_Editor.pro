@@ -1,4 +1,5 @@
 QT += quick quickcontrols2
+TARGET = binom-editor
 
 CONFIG += c++17
 

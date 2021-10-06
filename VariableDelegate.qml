@@ -13,11 +13,10 @@ Component {
       right: parent.right;
     }
 
-    Component.onCompleted: {
-      console.log("Created element with index ", index);
-    }
+//    Component.onCompleted: {
+//      console.log("Created element with index ", index);
+//    }
 
-//    width: parent.width;
     RowLayout { // Key
       width: parent.width;
       visible: var_type_input.currentIndex === 9;
@@ -35,7 +34,7 @@ Component {
         currentIndex: (typeof(key_type) == "string") ? indexOfValue(element_model.get(index).key_type): 0;
 
         Component.onCompleted: {
-          console.log(index, " key_type_input: called Component.onCompleted, type: ", element_model.get(index).key_type);
+//          console.log(index, " key_type_input: called Component.onCompleted, type: ", element_model.get(index).key_type);
           currentIndex = indexOfValue(element_model.get(index).key_type)
         }
 
@@ -44,13 +43,21 @@ Component {
             dynamic_variables[index].key = [];
           element_model.setProperty(index, "key_type", currentText);
         }
+      }
 
+      Label {
+        id: key_view;
+        Layout.fillWidth: true;
+        text: (typeof(dynamic_variables[index].key) == "string")
+              ? dynamic_variables[index].key
+              : (typeof(dynamic_variables[index].key) == "object")
+                ? JSON.stringify(dynamic_variables[index].key) : "";
       }
 
       ToolButton {
         id: edit_key_button;
         icon.source: "qrc:/icons/icons/edit_white_24dp.svg";
-        onClicked: editor_win.push(index);
+        onClicked: editor_win.push(index, true);
       }
 
     } // Key
@@ -79,7 +86,7 @@ Component {
         currentIndex: indexOfValue(element_model.get(index).type);
 
         Component.onCompleted: {
-          console.log(index, " value_type_input: called Component.onCompleted, type: ", element_model.get(index).type);
+//          console.log(index, " value_type_input: called Component.onCompleted, type: ", element_model.get(index).type);
           currentIndex = indexOfValue(element_model.get(index).type)
         }
 
@@ -99,7 +106,7 @@ Component {
         }
 
         Component.onCompleted: {
-          console.log(index, " value_input: called Component.onCompleted");
+//          console.log(index, " value_input: called Component.onCompleted");
           text = (typeof(dynamic_variables[index].value) == "number")? dynamic_variables[index].value : 0;
         }
 

@@ -93,6 +93,13 @@ public:
   inline ui64 getMemberCount() const {return *reinterpret_cast<ui64*>(data.bytes + 1);}
   inline ui8 getMemberSize() const { return toSize(getValType());}
 
+  inline bool isByte() const {return getType() == VarType::byte_array;}
+  inline bool isWord() const {return getType() == VarType::word_array;}
+  inline bool isDWord() const {return getType() == VarType::dword_array;}
+  inline bool isQWord() const {return getType() == VarType::qword_array;}
+
+  bool isPrintable() const;
+
   ByteArray serialize() const;
   static BufferArray deserialize(ByteArray::iterator& it);
   static ui64 serializedSize(ByteArray::iterator it);

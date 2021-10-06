@@ -60,8 +60,13 @@ public:
 
   ~Primitive();
 
-  VarType getType() const {return *data.type;}
-  ValType getValType() const {return toValueType(*data.type);}
+  inline VarType getType() const {return *data.type;}
+  inline ValType getValType() const {return toValueType(*data.type);}
+
+  inline bool isByte() const {return getType() == VarType::byte_array;}
+  inline bool isWord() const {return getType() == VarType::word_array;}
+  inline bool isDWord() const {return getType() == VarType::dword_array;}
+  inline bool isQWord() const {return getType() == VarType::qword_array;}
 
   ByteArray serialize() const;
   static Primitive deserialize(ByteArray::iterator& it);

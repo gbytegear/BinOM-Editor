@@ -31,8 +31,28 @@ Component {
           "dword_array",
           "qword_array"
         ];
-        currentIndex: (typeof(key_type) == "string") ? indexOfValue(key_type): 0;
+
+        currentIndex: (typeof(key_type) == "string") ? indexOfValue(element_model.get(index).key_type): 0;
+
+        Component.onCompleted: {
+          console.log(index, " key_type_input: called Component.onCompleted, type: ", element_model.get(index).key_type);
+          currentIndex = indexOfValue(element_model.get(index).key_type)
+        }
+
+        onCurrentTextChanged: {
+          if(dynamic_variables[index].key.length && currentText !== element_model.get(index).key_type)
+            dynamic_variables[index].key = [];
+          element_model.setProperty(index, "key_type", currentText);
+        }
+
       }
+
+      ToolButton {
+        id: edit_key_button;
+        icon.source: "qrc:/icons/icons/edit_white_24dp.svg";
+        onClicked: editor_win.push(index);
+      }
+
     } // Key
 
     RowLayout { // Value
@@ -64,7 +84,6 @@ Component {
         }
 
         onCurrentTextChanged: {
-//          console.log("value_type_input: called onCurrentTextChanged, type: ", currentText);
           if((currentIndex == 8 || currentIndex == 9) && typeof(dynamic_variables[index].value) == "number")
             dynamic_variables[index].value = [];
           element_model.setProperty(index, "type", currentText);

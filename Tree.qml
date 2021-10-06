@@ -70,12 +70,12 @@ Page {
         }
       }
 
-      function getColor() {
+      function getColor(unselected_color = app_root.highlight_text_color, selected_color = app_root.accent_second) {
         return tree_view_root.selected_item ?(
                   (tree_view_root.selected_item.path === modelData.path)
-                  ? app_root.accent_second
-                  : app_root.highlight_text_color
-               ): app_root.highlight_text_color;
+                  ? selected_color
+                  : unselected_color
+               ): unselected_color;
       }
 
       RowLayout {
@@ -85,28 +85,15 @@ Page {
 
         Item {
           Layout.fillHeight: true
-          width: 20;
+          width: 10;
 
           Rectangle {
             height: parent.height;
-            width: 5;
-            color: getColor();
+            x: -modelData.depth*10
+            width: modelData.depth*10 + 5;
+            color: getColor(app_root.text_color);
           }
 
-          Rectangle {
-            anchors.verticalCenter: parent.verticalCenter;
-            height: 5;
-            width: 20;
-            color: getColor();
-          }
-
-          Rectangle {
-            anchors.bottom: parent.bottom;
-            height: 5;
-            width: 15;
-            visible: modelData.is_open;
-            color: getColor();
-          }
         }
 
         Label {
@@ -136,18 +123,18 @@ Page {
 
       }
 
-//      Glow {
-//        anchors.fill: element_content;
-//        radius: 12;
-//        samples: 25;
-//        visible: tree_view_root.selected_item ?(
-//                   (tree_view_root.selected_item.path === modelData.path)
-//                     ? true
-//                     : false
-//                   ): false;
-//        color: "#000000";
-//        source: element_content;
-//      }
+      Glow {
+        anchors.fill: element_content;
+        radius: 12;
+        samples: 25;
+        visible: tree_view_root.selected_item ?(
+                   (tree_view_root.selected_item.path === modelData.path)
+                     ? true
+                     : false
+                   ): false;
+        color: "#000000";
+        source: element_content;
+      }
 
       onClicked: tree_view_root.selected_item = modelData;
       onDoubleClicked: if(modelData.type_class !== "primitive") BinOM.switchNodeVisibility(modelData.path);
@@ -186,8 +173,14 @@ Page {
         onClicked: editor_win.call(selected_item, "add");
       }
 
+      ToolButton {
+        icon.source: "qrc:/icons/icons/delete_forever_white_24dp.svg"
+        visible: !!tree_view_root.selected_item;
+      }
+
       Label {
         Layout.fillWidth: true;
+        color: app_root.accent_second;
         text: tree_view_root.selected_item
               ? `Selected: [${tree_view_root.selected_item.type}] ${tree_view_root.selected_item.path}` : "";
       }

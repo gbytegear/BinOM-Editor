@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Controls 1.4
 import QtQuick.Controls 2.12
-import QtQml.Models 2.15
+//import QtQml.Models 2.15
 import QtQuick.Layouts 1.12
 
 import BinOM 1.0
@@ -398,6 +398,7 @@ Page{ // Editor
     function removeElement(index) {
       if(dynamic_list_element_proto)
         dynamic_variables.splice(index, 1);
+      remove(index, 1);
     }
 
     function getData() {

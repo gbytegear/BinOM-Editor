@@ -12,11 +12,9 @@ class BinOMFile {
     struct SerializedStorage {
       binom::SerializedStorage storage;
       binom::Variable var;
-      binom::NodeVisitor root_node;
     } serialized;
     struct FileStorage {
       binom::FileStorage storage;
-      binom::FileNodeVisitor root_node;
     } file;
     ~File();
     File(binom::FileType file_type, QString file_path);
@@ -31,6 +29,10 @@ public:
   std::unique_ptr<binom::NodeVisitorBase> getRoot();
   binom::FileType getType() {return file_type;}
   QVariantList getModel() {return model;}
+  void save() {
+    if(file_type == binom::FileType::serialized_file_storage)
+      storage_union.serialized.storage.write(storage_union.serialized.var);
+  }
   void switchNodeVisibility(QString path_str) {
     binom::Path path = binom::Path::fromString(path_str.toStdString());
     if(model.isOpen(path))
@@ -74,6 +76,7 @@ public:
   Q_INVOKABLE bool createFile(QString file_path, QJSValue value, QString expected_root_type);
   Q_INVOKABLE void closeFile(QString file_name);
   Q_INVOKABLE bool selectFile(QString file_name);
+  Q_INVOKABLE void saveData() {if(isFileSelected())selected_file->second->save();}
   Q_INVOKABLE bool isFileSelected() const {return selected_file != files.end();}
   Q_INVOKABLE bool switchNodeVisibility(QString path_str) {
     if(!isFileSelected()) return false;
@@ -99,6 +102,7 @@ public:
 
   binom::Variable tryConvert(QVariant value, binom::VarType type);
   Q_INVOKABLE bool setNode(QString path, QJSValue value, QString expected_type);
+  Q_INVOKABLE bool removeNode(QString path);
 
   QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
   QVariantList getHistory();

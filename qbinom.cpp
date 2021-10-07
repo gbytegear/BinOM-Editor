@@ -45,9 +45,9 @@ std::unique_ptr<binom::NodeVisitorBase> BinOMFile::getRoot() {
   switch (file_type) {
     default: return nullptr;
     case binom::FileType::file_storage:
-    return std::unique_ptr<binom::NodeVisitorBase>(new binom::FileNodeVisitor(storage_union.file.root_node));
+    return std::unique_ptr<binom::NodeVisitorBase>(new binom::FileNodeVisitor(storage_union.file.storage));
     case binom::FileType::serialized_file_storage:
-    return std::unique_ptr<binom::NodeVisitorBase>(new binom::NodeVisitor(storage_union.serialized.root_node));
+    return std::unique_ptr<binom::NodeVisitorBase>(new binom::NodeVisitor(storage_union.serialized.var));
   }
 }
 
@@ -59,12 +59,11 @@ BinOMFile::File::File(binom::FileType file_type, QString file_path) {
     return;
     case binom::FileType::file_storage:
       new(&file.storage) binom::FileStorage(file_path.toStdString());
-      new(&file.root_node) binom::FileNodeVisitor(file.storage);
+//      new(&file.root_node) binom::FileNodeVisitor(file.storage);
     break;
     case binom::FileType::serialized_file_storage:
       new(&serialized.storage) binom::SerializedStorage(file_path.toStdString());
       new(&serialized.var) binom::Variable(serialized.storage);
-      new(&serialized.root_node) binom::NodeVisitor(serialized.var);
     break;
   }
 }
@@ -134,14 +133,30 @@ bool QBinOM::createFile(QString file_path, QJSValue value, QString expected_root
 void QBinOM::closeFile(QString file_name) {
   std::map<QString, std::unique_ptr<BinOMFile>>::iterator it = files.find(file_name);
   if(it == selected_file) {
-    selected_file = files.end();
-    emit isFileSelectedChanged(selected_file != files.cend());
-    emit fileTypeChanged(getFileType());
-    emit fileNameChanged(getFileName());
-    emit treeModelChanged(QVariantList());
+    if(files.empty()) {
+      selected_file = files.end();
+      if(it != files.cend())
+        files.erase(it);
+      emit openFilesChanged(getOpenFiles());
+      emit isFileSelectedChanged(isFileSelected());
+      emit treeModelChanged(getTreeModel());
+      emit fileTypeChanged(getFileType());
+      emit fileNameChanged(getFileName());
+      return;
+    } else {
+      if(it != files.cend())
+        files.erase(it);
+      selected_file = files.begin();
+      emit openFilesChanged(getOpenFiles());
+      emit treeModelChanged(getTreeModel());
+      emit fileTypeChanged(getFileType());
+      emit fileNameChanged(getFileName());
+      return;
+    }
   }
   if(it != files.cend())
     files.erase(it);
+  emit openFilesChanged(getOpenFiles());
 }
 
 bool QBinOM::selectFile(QString file_name) {
@@ -360,6 +375,14 @@ bool QBinOM::setNode(QString path, QJSValue value, QString expected_type_str) {
   auto node = selected_file->second->getRoot();
   if(node->isNull()) return false;
   (*node)(path.isEmpty()? binom::Path() : binom::Path::fromString(path.toStdString())).setVariable(var_value);
+  emit treeModelChanged(getTreeModel());
+  return true;
+}
+
+bool QBinOM::removeNode(QString path) {
+  auto node = selected_file->second->getRoot();
+  if(node->isNull()) return false;
+  node->remove(binom::Path::fromString(path.toStdString()));
   emit treeModelChanged(getTreeModel());
   return true;
 }

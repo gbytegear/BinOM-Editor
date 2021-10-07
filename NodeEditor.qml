@@ -46,9 +46,9 @@ Page{ // Editor
 
   function getEditorData() {
     if(var_type_input.currentIndex >= 0 && var_type_input.currentIndex <= 3)
-      return var_type_input.text-1+1;
-    if(state === "byte_array_string_edit_state")
-      return var_type_input.text;
+      return value_input.text-1+1;
+    if(var_type_input.currentIndex == 4 && input_type_input.currentIndex == 1)
+      return value_input.text;
     if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 9)
       return element_model.getData();
   }
@@ -87,10 +87,8 @@ Page{ // Editor
 
   function popAndSave() {
     let form_data = edit_stack.pop();
-    let current_data = null;
-    if(state === "byte_array_string_edit_state")
-      current_data = value_input.text;
-    else current_data = element_model.getData();
+    let current_data = getEditorData();
+    value_input.text = "";
     mode = form_data.mode;
     var_type_input.currentIndex = var_type_input.indexOfValue(form_data.type);
     if(form_data.key_edit)
@@ -105,128 +103,11 @@ Page{ // Editor
 
   function pop() {
     let form_data = edit_stack.pop();
+    value_input.text = "";
     mode = form_data.mode;
     var_type_input.currentIndex = var_type_input.indexOfValue(form_data.type);
     element_model.setData(form_data.data);
   }
-
-  function validate() {
-    if(var_type_input.currentIndex >= 0 && var_type_input.currentIndex <= 3)
-      return !!value_input.text.length;
-    if(var_type_input.currentIndex >= 4 && var_type_input.currentIndex <= 7)
-      return true;
-
-    let array_validator = array_data => {
-      for (let index = 0; index < array_data.length; ++index) {
-        let element = array_data[0];
-        switch(element.type) {
-          case "byte": case "word": case "dword": case "qword":
-          if(typeof element.value != "number") return false;
-          continue
-
-          case "byte_array":
-          if(typeof element.value == "string") continue;
-          case "word_array": case "dword_array": case "qword_array":
-          if(typeof element.value != "object") {
-            return false;
-          }else if(element.value.constructor.name !== "Array") {
-            return false;
-          }
-          continue;
-
-          case "array":
-          if(typeof element.value != "object") {
-            return false;
-          }else if(element.value.constructor.name !== "Array") {
-            return false;
-          } else if(!array_validator(element.value)) {
-            return false;
-          }
-          continue;
-
-          case "object":
-          if(typeof element.value != "object") {
-            return false;
-          }else if(element.value.constructor.name !== "Array") {
-            return false;
-          } else if(!object_validator(element.value)) {
-            return false;
-          }
-          continue;
-          default: return false;
-        }
-      }
-      return true;
-    };
-
-    let object_validator = object_data => {
-      for (let index = 0; index < object_data.length; ++index) {
-        let element = object_data[0];
-
-        switch(element.key_type) {
-          case "byte_array":
-          if(typeof element.key == "string") {
-            if(!element.key.length) return false;
-            break;
-          }
-          case "word_array": case "dword_array": case "qword_array":
-          if(typeof element.key != "object") {
-            return false;
-          }else if(element.key.constructor.name !== "Array") {
-            if(!element.key.length) return false;
-            return false;
-          }
-          break;
-          default: return false;
-        }
-
-
-        switch(element.type) {
-          case "byte": case "word": case "dword": case "qword":
-          if(typeof element.value != "number") return false;
-          continue
-
-          case "byte_array":
-          if(typeof element.value == "string") continue;
-          case "word_array": case "dword_array": case "qword_array":
-          if(typeof element.value != "object") {
-            return false;
-          }else if(element.value.constructor.name !== "Array") {
-            return false;
-          }
-          continue;
-
-          case "array":
-          if(typeof element.value != "object") {
-            return false;
-          }else if(element.value.constructor.name !== "Array") {
-            return false;
-          } else if(!array_validator(element.value)) {
-            return false;
-          }
-          continue;
-
-          case "object":
-          if(typeof element.value != "object") {
-            return false;
-          }else if(element.value.constructor.name !== "Array") {
-            return false;
-          } else if(!object_validator(element.value)) {
-            return false;
-          }
-          continue;
-          default: return false;
-        }
-      }
-      return true;
-    };
-
-    if(var_type_input.currentIndex == 8)
-      return array_validator(element_model.getData());
-    if(var_type_input.currentIndex == 9)
-      return object_validator(element_model.getData());
-  }
-
 
   header: ToolBar { // HEADER
     RowLayout {
@@ -384,12 +265,8 @@ Page{ // Editor
           switch(mode) {
           case "element": popAndSave(); return;
           case "edit":
-            if(validate()){
-              if(BinOM.setNode(node_properties.path, data, var_type_input.currentText))
-                editor_win.close();
-            } else {
-              console.error("Invalid data");
-            }
+            if(BinOM.setNode(node_properties.path, data, var_type_input.currentText))
+              editor_win.close();
             return;
           case "add": console.warn("Not implemented"); return;
           case "root":

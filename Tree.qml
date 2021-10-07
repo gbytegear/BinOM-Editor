@@ -19,6 +19,7 @@ Page {
       ToolButton {
         visible: BinOM.selected_file_type == "serialized storage";
         icon.source: "qrc:/icons/icons/save_white_24dp.svg";
+        onClicked: BinOM.saveData();
       }
 
       ListView {
@@ -29,17 +30,24 @@ Page {
         orientation: ListView.Horizontal;
         model: BinOM.open_files;
 
-        delegate: ToolButton {
-          icon.source: (modelData.type === "file storage")
-                       ? "qrc:/icons/icons/storage_white_24dp.svg"
-                       : "qrc:/icons/icons/file_white_24dp.svg";
-          icon.color: (BinOM.selected_file_name === modelData.name)?app_root.accent:app_root.text_color;
-          text: modelData.name;
-          onClicked: {
-            tree_view_root.selected_item = null;
-            editor_win.visible = false;
-            BinOM.selectFile(modelData.name);
-            tree_view_root.selected_container = modelData;
+        delegate: RowLayout{
+          ToolButton {
+            Layout.fillWidth: true;
+            icon.source: (modelData.type === "file storage")
+                         ? "qrc:/icons/icons/storage_white_24dp.svg"
+                         : "qrc:/icons/icons/file_white_24dp.svg";
+            icon.color: (BinOM.selected_file_name === modelData.name)?app_root.accent:app_root.text_color;
+            text: modelData.name;
+            onClicked: {
+              tree_view_root.selected_item = null;
+              editor_win.visible = false;
+              BinOM.selectFile(modelData.name);
+              tree_view_root.selected_container = modelData;
+            }
+          }
+          ToolButton {
+            icon.source: "qrc:/icons/icons/cancel_white_24dp.svg";
+            onClicked: BinOM.closeFile(modelData.name);
           }
         }
       }
@@ -175,7 +183,8 @@ Page {
 
       ToolButton {
         icon.source: "qrc:/icons/icons/delete_forever_white_24dp.svg"
-        visible: !!tree_view_root.selected_item;
+        visible: !!tree_view_root.selected_item? !!tree_view_root.selected_item.depth : false;
+        onClicked: BinOM.removeNode(tree_view_root.selected_item.path);
       }
 
       Label {

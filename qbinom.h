@@ -41,6 +41,7 @@ public:
 };
 
 #include <QDesktopServices>
+#include <QJSValue>
 
 class QBinOM : public QObject {
 
@@ -70,6 +71,7 @@ public:
   QBinOM();
 
   Q_INVOKABLE bool openFile(QString file_path);
+  Q_INVOKABLE bool createFile(QString file_path, QJSValue value, QString expected_root_type);
   Q_INVOKABLE void closeFile(QString file_name);
   Q_INVOKABLE bool selectFile(QString file_name);
   Q_INVOKABLE bool isFileSelected() const {return selected_file != files.end();}
@@ -96,7 +98,7 @@ public:
   }
 
   binom::Variable tryConvert(QVariant value, binom::VarType type);
-  Q_INVOKABLE bool setNode(QString path, QVariant value, QString expected_type);
+  Q_INVOKABLE bool setNode(QString path, QJSValue value, QString expected_type);
 
   QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
   QVariantList getHistory();

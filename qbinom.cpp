@@ -2,6 +2,26 @@
 
 // BinOMFile & BinOMFile::File
 
+binom::VarType toVarType(QString type_string) {
+#define RET_TYPE(var_type) std::pair<QString, binom::VarType>{#var_type, binom::VarType::var_type}
+  static const QMap<QString, binom::VarType> str_switch = {
+    RET_TYPE(byte),
+    RET_TYPE(word),
+    RET_TYPE(dword),
+    RET_TYPE(qword),
+    RET_TYPE(byte_array),
+    RET_TYPE(word_array),
+    RET_TYPE(dword_array),
+    RET_TYPE(qword_array),
+    RET_TYPE(array),
+    RET_TYPE(object)
+  };
+#undef RET_TYPE
+  if(!str_switch.contains(type_string))
+    return binom::VarType::invalid_type;
+  return str_switch[std::move(type_string)];
+}
+
 
 
 BinOMFile::BinOMFile(binom::FileType file_type, QString file_path)
@@ -83,6 +103,34 @@ bool QBinOM::openFile(QString file_path) {
   return true;
 }
 
+bool QBinOM::createFile(QString file_path, QJSValue value, QString expected_root_type) {
+  std::string file_path_std = file_path.toStdString();
+  std::string file_extension = file_path_std.substr(file_path_std.find_last_of(".") + 1);
+  binom::FileType file_type = (file_extension == "binom")
+                              ? binom::FileType::serialized_file_storage
+                              : (file_extension == "binomdb")
+                                ? binom::FileType::file_storage
+                                : binom::FileType::undefined_file;
+  if(file_type == binom::FileType::undefined_file)
+    return false;
+
+  binom::Variable var_value = tryConvert(value.toVariant(), toVarType(expected_root_type));
+  if(var_value.isNull()) return false;
+
+  switch (file_type) {
+    default: return false;
+    case binom::FileType::serialized_file_storage: {
+      binom::SerializedStorage storage(file_path_std);
+      storage.write(var_value);
+    } break;
+    case binom::FileType::file_storage: {
+      binom::FileStorage storage(file_path_std, var_value, true);
+    } break;
+  }
+
+  return openFile(file_path);
+}
+
 void QBinOM::closeFile(QString file_name) {
   std::map<QString, std::unique_ptr<BinOMFile>>::iterator it = files.find(file_name);
   if(it == selected_file) {
@@ -103,27 +151,6 @@ bool QBinOM::selectFile(QString file_name) {
   emit fileTypeChanged(getFileType());
   emit fileNameChanged(getFileName());
   return selected_file != files.cend();
-}
-
-
-binom::VarType toVarType(QString type_string) {
-#define RET_TYPE(var_type) std::pair<QString, binom::VarType>{#var_type, binom::VarType::var_type}
-  static const QMap<QString, binom::VarType> str_switch = {
-    RET_TYPE(byte),
-    RET_TYPE(word),
-    RET_TYPE(dword),
-    RET_TYPE(qword),
-    RET_TYPE(byte_array),
-    RET_TYPE(word_array),
-    RET_TYPE(dword_array),
-    RET_TYPE(qword_array),
-    RET_TYPE(array),
-    RET_TYPE(object)
-  };
-#undef RET_TYPE
-  if(!str_switch.contains(type_string))
-    return binom::VarType::invalid_type;
-  return str_switch[std::move(type_string)];
 }
 
 binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
@@ -327,12 +354,12 @@ binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
   }
 }
 
-bool QBinOM::setNode(QString path, QVariant value, QString expected_type_str) {
-  binom::Variable var_value = tryConvert(std::move(value), toVarType(expected_type_str));
+bool QBinOM::setNode(QString path, QJSValue value, QString expected_type_str) {
+  binom::Variable var_value = tryConvert(value.toVariant(), toVarType(expected_type_str));
   if(var_value.isNull()) return false;
   auto node = selected_file->second->getRoot();
   if(node->isNull()) return false;
-  node->stepInside(binom::Path::fromString(path.toStdString())).setVariable(var_value);
+  (*node)(path.isEmpty()? binom::Path() : binom::Path::fromString(path.toStdString())).setVariable(var_value);
   emit treeModelChanged(getTreeModel());
   return true;
 }

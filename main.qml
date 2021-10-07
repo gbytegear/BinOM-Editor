@@ -29,7 +29,8 @@ Window {
     id: file_dialog;
     title: "Chose BinOM file";
     folder: shortcuts.home;
-    nameFilters: [ "BinOM files (*.binom *.binomdb)", "All files (*)" ]
+    nameFilters: [ "BinOM files (*.binom *.binomdb)", "All files (*)" ];
+    modality: Qt.ApplicationModal;
 
     onAccepted: {
       if(BinOM.openFile(file_dialog.fileUrl.toString().replace(/^(file:\/{3})/,"")))

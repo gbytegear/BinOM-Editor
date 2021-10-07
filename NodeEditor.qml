@@ -3,6 +3,7 @@ import QtQuick.Controls 1.4
 import QtQuick.Controls 2.12
 //import QtQml.Models 2.15
 import QtQuick.Layouts 1.12
+import QtQuick.Dialogs 1.0
 
 import BinOM 1.0
 
@@ -19,6 +20,20 @@ Page{ // Editor
   property var node_properties: null;
   property var mode: null;
   property var edit_stack: new Array;
+
+  FileDialog {
+    id: create_file_dialog;
+    title: "Save file";
+    selectExisting: false;
+    nameFilters: [ "Serialized BinOM storage (*.binom)", "Dynamic BinOM storage (*.binomdb)" ];
+    onAccepted: {
+//      console.log(fileUrl);
+      if(BinOM.createFile(create_file_dialog.fileUrl.toString().replace(/^(file:\/{3})/,""),
+                       getEditorData(),
+                       var_type_input.currentText))
+        editor_win.close();
+    }
+  }
 
   visible: false;
   anchors.fill: parent;
@@ -145,8 +160,8 @@ Page{ // Editor
     };
 
     let object_validator = object_data => {
-      for (let index = 0; index < array_data.length; ++index) {
-        let element = array_data[0];
+      for (let index = 0; index < object_data.length; ++index) {
+        let element = object_data[0];
 
         switch(element.key_type) {
           case "byte_array":
@@ -364,16 +379,22 @@ Page{ // Editor
         id: confirm_button;
         text: "Confirm";
         onClicked: {
+          let data = getEditorData();
+          console.log("Editor data:", JSON.stringify(data));
           switch(mode) {
           case "element": popAndSave(); return;
           case "edit":
-            if(validate())
-              BinOM.setNode(node_properties.path, getEditorData());
-            else
+            if(validate()){
+              if(BinOM.setNode(node_properties.path, data, var_type_input.currentText))
+                editor_win.close();
+            } else {
               console.error("Invalid data");
+            }
             return;
           case "add": console.warn("Not implemented"); return;
-          case "root": console.warn("Not implemented"); return;
+          case "root":
+            create_file_dialog.open();
+            return;
           }
         }
       }

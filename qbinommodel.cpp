@@ -4,12 +4,59 @@
 QBinOMModel::operator QVariantList() {
   QVariantList data;
   switch (node->getVisitorType()) {
-    case binom::VisitorType::ram_storage_visitor:
-      buildData(data, binom::Path(), node->toRAMVisitor());
-    break;
-    case binom::VisitorType::file_storage_visitor:
-      buildData(data, binom::Path(), node->toFileVisitor());
-    break;
+    case binom::VisitorType::ram_storage_visitor: {
+      binom::NodeVisitor node = this->node->toRAMVisitor();
+      bool is_open = opened.contains(QString::fromStdString(binom::Path().toString()));
+      data.push_back(QVariantMap {
+                       {"type", binom::toTypeString(node.getType())},
+                       {"type_class", binom::toTypeString(node.getTypeClass())},
+                       {"path", QString::fromStdString(binom::Path().toString())},
+                       {"is_open", is_open},
+                       {"key", "root"},
+                       {"depth", QVariant(0)},
+                       {"is_value_ref", node.isValueRef()},
+                       {"element_count", qulonglong(node.getElementCount())},
+                       {"value",
+                        (node.getTypeClass() == binom::VarTypeClass::primitive)
+                        ? qulonglong(node.getValue().asUi64())
+                        : (node.getType() == binom::VarType::byte_array)
+                          ? (node.getVariable().toBufferArray().isPrintable()
+                            ? QString::fromStdString(node.getVariable().toBufferArray())
+                            : QVariant())
+                          : QVariant()}
+                     });
+      if(is_open)
+        buildData(data, binom::Path(), node, 1);
+    } break;
+    case binom::VisitorType::file_storage_visitor: {
+      binom::FileNodeVisitor node = this->node->toFileVisitor();
+      bool is_open = opened.contains(QString::fromStdString(binom::Path().toString()));
+      binom::VarType type = node.getType();
+
+      {
+        binom::BufferArray value_tmp(binom::ValType::byte);
+        data.push_back(QVariantMap {
+                         {"type", binom::toTypeString(type)},
+                         {"type_class", binom::toTypeString(binom::toTypeClass(type))},
+                         {"path", QString::fromStdString(binom::Path().toString())},
+                         {"is_open", is_open},
+                         {"key", "root"},
+                         {"depth", QVariant(0)},
+                         {"is_value_ref", node.isValueRef()},
+                         {"element_count", qulonglong(node.getElementCount())},
+                         {"value", (binom::toTypeClass(type) == binom::VarTypeClass::primitive)
+                                   ? qulonglong(node.getVariable().getValue().asUi64())
+                                   : (type == binom::VarType::byte_array)
+                                     ? ((value_tmp = node.getVariable().toBufferArray()).isPrintable()
+                                       ? QString::fromStdString(value_tmp)
+                                       : QVariant())
+                                     : QVariant()}
+                       });
+      }
+
+      if(is_open)
+        buildData(data, binom::Path(), node, 1);
+    } break;
   }
   return data;
 }

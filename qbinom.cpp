@@ -168,6 +168,28 @@ bool QBinOM::selectFile(QString file_name) {
   return selected_file != files.cend();
 }
 
+bool QBinOM::switchNodeVisibility(QString path_str) {
+  if(!isFileSelected()) return false;
+  selected_file->second->switchNodeVisibility(path_str);
+  emit treeModelChanged(getTreeModel());
+  return true;
+}
+
+QVariantList QBinOM::getOpenFiles() const {
+  QVariantList files_info;
+  for(auto& [name, file] : files) {
+    files_info.push_back(QVariantMap{
+                           {"name", name},
+                           {"type", (file->getType() == binom::FileType::file_storage)
+                            ? "file storage"
+                            :(file->getType() == binom::FileType::serialized_file_storage)
+                            ? "serialized storage"
+                            : "undefined"}
+                         });
+  }
+  return files_info;
+}
+
 binom::Variable QBinOM::tryConvert(QVariant value, binom::VarType type) {
   switch (type) {
     case binom::VarType::byte:
@@ -379,6 +401,49 @@ bool QBinOM::setNode(QString path, QJSValue value, QString expected_type_str) {
   return true;
 }
 
+bool QBinOM::insertNodes(QString path, QJSValue value, QString expected_type_str, QString insert_type, qulonglong index) {
+  binom::Variable var_value = tryConvert(value.toVariant(), toVarType(expected_type_str));
+  if(var_value.isNull()) return false;
+  auto node = selected_file->second->getRoot();
+  if(node->isNull()) return false;
+  (*node)(path.isEmpty()? binom::Path() : binom::Path::fromString(path.toStdString()));
+  if(var_value.type() != node->getType()) return false;
+
+  switch (var_value.typeClass()) {
+    case binom::VarTypeClass::primitive: return false;
+    case binom::VarTypeClass::buffer_array:
+      if(insert_type == "back")
+        node->pushBack(var_value);
+      elif(insert_type == "front")
+        node->pushFront(var_value);
+      elif(insert_type == "insert")
+        node->insert(index, var_value);
+      else return false;
+    break;
+    case binom::VarTypeClass::array:
+      if(insert_type == "back")
+        for(binom::Variable& element : var_value.toArray())
+          node->pushBack(element);
+      elif(insert_type == "front") {
+        binom::ui64 index = 0;
+        for(binom::Variable& element : var_value.toArray())
+          node->insert(index++, element);
+      } elif(insert_type == "insert") {
+        for(binom::Variable& element : var_value.toArray())
+          node->insert(index++, element);
+      } else return false;
+    break;
+    case binom::VarTypeClass::object:
+      for(binom::NamedVariable& element : var_value.toObject())
+        node->insert(element.name, element.variable);
+    break;
+    case binom::VarTypeClass::invalid_type: return false;
+  }
+
+  emit treeModelChanged(getTreeModel());
+  return true;
+}
+
 bool QBinOM::removeNode(QString path) {
   auto node = selected_file->second->getRoot();
   if(node->isNull()) return false;
@@ -397,4 +462,18 @@ QVariantList QBinOM::getHistory() {
 //                   });
 //  }
 //  return list;
+}
+
+QString QBinOM::getFileType() const {
+  if(!isFileSelected()) return "undefined";
+  switch (selected_file->second->getType()) {
+    case binom::FileType::file_storage: return "file storage";
+    case binom::FileType::serialized_file_storage: return "serialized storage";
+    default: return "undefined";
+  }
+}
+
+QVariant QBinOM::getFileName() const {
+  if(!isFileSelected()) return QVariant();
+  return selected_file->first;
 }

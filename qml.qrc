@@ -5,8 +5,6 @@
         <file>Tree.qml</file>
         <file>Settings.qml</file>
         <file>NodeEditor.qml</file>
-        <file>ValueDelegate.qml</file>
-        <file>VariableDelegate.qml</file>
     </qresource>
     <qresource prefix="/icons" lang="svg">
         <file>icons/account_tree_white_24dp.svg</file>

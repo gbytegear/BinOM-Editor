@@ -69,6 +69,8 @@ QDesktopServices::storageLocation(QDesktopServices::DataLocation)
   Q_PROPERTY(QVariantList files_history READ getHistory NOTIFY historyChanged)
   Q_OBJECT
 
+  binom::Variable tryConvert(QVariant value, binom::VarType type);
+
 public:
   QBinOM();
 
@@ -78,48 +80,17 @@ public:
   Q_INVOKABLE bool selectFile(QString file_name);
   Q_INVOKABLE void saveData() {if(isFileSelected())selected_file->second->save();}
   Q_INVOKABLE bool isFileSelected() const {return selected_file != files.end();}
-  Q_INVOKABLE bool switchNodeVisibility(QString path_str) {
-    if(!isFileSelected()) return false;
-    selected_file->second->switchNodeVisibility(path_str);
-    emit treeModelChanged(getTreeModel());
-    return true;
-  }
+  Q_INVOKABLE bool switchNodeVisibility(QString path_str);
 
-  QVariantList getOpenFiles() const {
-    QVariantList files_info;
-    for(auto& [name, file] : files) {
-      files_info.push_back(QVariantMap{
-                             {"name", name},
-                             {"type", (file->getType() == binom::FileType::file_storage)
-                                      ? "file storage"
-                                      :(file->getType() == binom::FileType::serialized_file_storage)
-                                      ? "serialized storage"
-                                      : "undefined"}
-                           });
-    }
-    return files_info;
-  }
-
-  binom::Variable tryConvert(QVariant value, binom::VarType type);
   Q_INVOKABLE bool setNode(QString path, QJSValue value, QString expected_type);
+  Q_INVOKABLE bool insertNodes(QString path, QJSValue value, QString expected_type_str, QString insert_type, qulonglong index = 0);
   Q_INVOKABLE bool removeNode(QString path);
 
+  QVariantList getOpenFiles() const;
   QVariantList getTreeModel() const {return isFileSelected()?selected_file->second->getModel() : QVariantList();}
   QVariantList getHistory();
-
-  QString getFileType() const {
-    if(!isFileSelected()) return "undefined";
-    switch (selected_file->second->getType()) {
-      case binom::FileType::file_storage: return "file storage";
-      case binom::FileType::serialized_file_storage: return "serialized storage";
-      default: return "undefined";
-    }
-  }
-
-  QVariant getFileName() const {
-    if(!isFileSelected()) return QVariant();
-    return selected_file->first;
-  }
+  QString getFileType() const;
+  QVariant getFileName() const;
 
 signals:
   void isFileSelectedChanged(bool is_file_selected);

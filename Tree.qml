@@ -8,7 +8,7 @@ import BinOM 1.0
 
 Page {
   id: tree_view_root;
-  property alias editor: editor_win;
+//  property alias editor: editor_win;
   property var selected_item: null;
   property var selected_container: null;
   header: ToolBar {
@@ -171,14 +171,13 @@ Page {
         icon.source: "qrc:/icons/icons/edit_white_24dp.svg"
         visible: !!tree_view_root.selected_item;
         icon.color: editor_win.mode?((editor_win.mode === "edit")?app_root.accent:app_root.highlight_text_color):app_root.highlight_text_color;
-        onClicked: editor_win.call(selected_item, "edit");
+        onClicked: editor_win.call();
       }
 
       ToolButton {
         icon.source: "qrc:/icons/icons/add_circle_white_24dp.svg"
         visible: (!!tree_view_root.selected_item)? (tree_view_root.selected_item.type_class !== "primitive") : false;
         icon.color: editor_win.mode?((editor_win.mode === "add")?app_root.accent:app_root.highlight_text_color):app_root.highlight_text_color;
-        onClicked: editor_win.call(selected_item, "add");
       }
 
       ToolButton {
